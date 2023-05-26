@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 # author: Shen PF
 # date: 2021-07-20
+import os
 
 from MCNP.model.base import YMLModelObject as BaseModel
 import numpy as np
@@ -54,7 +55,8 @@ class Transformation(BaseModel):
             if self.paras[12] == -1:
                 self.move = -self.move
         else:
-            return False
+            print("Warning: Please input the total 9 angles or 9 elements in rotate matrix in MCNP input.\n"
+                  "The incomplete TR or TRCL card is ignored")
 
 
 class Cell(BaseModel):

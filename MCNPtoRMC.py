@@ -8,6 +8,7 @@ import RMC.model.input.Geometry as RMCGeometry
 import RMC.model.input.Criticality as RMCCriticality
 from RMC.model.input.base import Model as RMCModel
 import MCNP.parser.PlainParser as MCNPParser
+import numpy as np
 
 
 def transfer(inp_MCNP):
@@ -22,9 +23,24 @@ def transfer(inp_MCNP):
     # transfer surface block
     R_surfaces = []
     for M_surf in M_model.model['surface'].surfaces:
-        surf = RMCGeometry.Surface(number=M_surf.number, stype=M_surf.type, parameters=M_surf.parameters,
-                                   boundary=M_surf.boundary, pair=M_surf.pair)
-        R_surfaces.append(surf)
+        if M_surf.tr is not None:
+            if M_surf.tr.rotate is not None:
+                surf = RMCGeometry.Surface.externalization(number=M_surf.number, type=M_surf.type,
+                                                           parameters=M_surf.parameters,
+                                                           boundary=M_surf.boundary, pair=M_surf.pair,
+                                                           move=M_surf.tr.move,
+                                                           rotate=np.array(M_surf.tr.rotate).reshape([3, 3]))
+            else:
+                surf = RMCGeometry.Surface.externalization(number=M_surf.number, type=M_surf.type,
+                                                           parameters=M_surf.parameters,
+                                                           boundary=M_surf.boundary, pair=M_surf.pair,
+                                                           move=M_surf.tr.move)
+            R_surfaces.append(surf)
+        else:
+            surf = RMCGeometry.Surface.externalization(number=M_surf.number, type=M_surf.type,
+                                                       parameters=M_surf.parameters,
+                                                       boundary=M_surf.boundary, pair=M_surf.pair)
+            R_surfaces.append(surf)
 
     R_surfaces_model = RMCGeometry.Surfaces(surfaces=R_surfaces)
     test = str(R_surfaces_model)
@@ -66,8 +82,16 @@ def transfer(inp_MCNP):
         out_universe_id = 0
         if cell.universe:
             out_universe_id = cell.universe
-        R_cell = RMCGeometry.Cell(number=cell.number, bounds=cell.bounds.replace('#', '!'), material=[cell.material],
-                                  fill=cell.fill, imp_n=cell.impn, imp_p=cell.impp)
+        if cell.trcl is not None:
+            R_cell = RMCGeometry.Cell(number=cell.number, bounds=cell.bounds.replace('#', '!'),
+                                      material=[cell.material],
+                                      fill=cell.fill, imp_n=cell.impn, imp_p=cell.impp,
+                                      transformation=RMCGeometry.Transformation(move=cell.trcl.move,
+                                                                                rotate=cell.trcl.rotate))
+        else:
+            R_cell = RMCGeometry.Cell(number=cell.number, bounds=cell.bounds.replace('#', '!'),
+                                      material=[cell.material],
+                                      fill=cell.fill, imp_n=cell.impn, imp_p=cell.impp)
 
         established_univ = False
         for index in range(len(R_universes_ids)):
@@ -104,10 +128,11 @@ def transfer(inp_MCNP):
     R_model.model['material'] = R_materials_model
 
     # set the Criticality block
-    power_iter={"KEFF0":1, "POPULATION":[10000, 50, 300], "BATCHNUM":1}
+    power_iter = {"KEFF0": 1, "POPULATION": [10000, 50, 300], "BATCHNUM": 1}
     R_model.model['criticality'] = RMCCriticality.Criticality(power_iter=power_iter,
-        unparsed='InitSrc point = 0 0 0')
-    R_model.model['plot'] = 'PLOT Continue-calculation = 1\nPlotID 1 Type = slice Color = cell Pixels=10000 10000 Vertexes=-100 -100 0 100 100 0\nPlotID 2 type = slice color = cell pixels=10000 10000 vertexes=-100 0 -100 100 0 100'
+                                                              unparsed='InitSrc point = 0 0 0')
+    R_model.model[
+        'plot'] = 'PLOT Continue-calculation = 1\nPlotID 1 Type = slice Color = cell Pixels=10000 10000 Vertexes=-100 -100 0 100 100 0\nPlotID 2 type = slice color = cell pixels=10000 10000 vertexes=-100 0 -100 100 0 100'
 
     # output 2 files
     with open(inp_MCNP + '_parsed_RMC_model', 'w+') as f:

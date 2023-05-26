@@ -269,8 +269,6 @@ class PlainParser:
                 cell_card_options = copy.deepcopy(Cell.card_option_types)
                 if index != cell_len:
                     unparsed_items = ' '.join(cell.split()[index:])
-                    # unparsed_items = unparsed_items.replace('*trcl', "trcl")
-                    # unparsed_items = unparsed_items.replace('*TRCL', "TRCL")
                     while unparsed_items is not '':
                         if 'LAT' in cell_dict and 'FILL' in cell_card_options:
                             cell_card_options.pop('FILL')
