@@ -51,6 +51,14 @@ class PlainParser:
                 imp_n_list = imp_dict['IMP:N']
                 for i in range(len(geometry_model.cells)):
                     geometry_model.cells[i].impn = imp_n_list[i]
+            if 'IMP:P' in imp_dict:
+                imp_p_list = imp_dict['IMP:P']
+                for i in range(len(geometry_model.cells)):
+                    geometry_model.cells[i].impp = imp_p_list[i]
+            if 'IMP:E' in imp_dict:
+                imp_e_list = imp_dict['IMP:E']
+                for i in range(len(geometry_model.cells)):
+                    geometry_model.cells[i].impn = imp_e_list[i]
             self.parsed_model.model['unparsed'] = other_cards[2]
 
         self.parsed_model.model['surface'] = surface_model
@@ -71,6 +79,10 @@ class PlainParser:
                 words = option.split()
                 values = [float(words[i + 1]) for i in range(len(words) - 1)]
                 imp_dict["IMP:E"] = values
+            elif re.match(r'IMP\:P', option, re.I):
+                words = option.split()
+                values = [float(words[i + 1]) for i in range(len(words) - 1)]
+                imp_dict["IMP:P"] = values
             else:
                 unparsed += option + '\n'
         return imp_dict

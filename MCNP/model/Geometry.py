@@ -6,6 +6,43 @@ from MCNP.model.base import YMLModelObject as BaseModel
 import numpy as np
 
 
+class Transformation(BaseModel):
+    yaml_tag = u'!transformation'
+
+    def __init__(self, move=None, rotate=None):
+        if move is not None:
+            self.move = np.array(move)
+        else:
+            self.move = None
+        if rotate is not None:
+            self.rotate = np.array(rotate)
+        else:
+            self.rotate = None
+
+    def check(self):
+        assert self.move.shape == tuple([3]) and self.rotate.shape == tuple([3, 3])
+
+    def __str__(self):
+        s = ''
+        if self.move is not None:
+            s += 'move='
+            for idx, val in enumerate(self.move):
+                s += f'{val:.12g} '
+        if self.rotate is not None:
+            s += 'rotate='
+            for idx, val in enumerate(self.rotate):
+                s += '{:.12g} '.format(val)
+        return s.strip()
+
+    def __copy__(self):
+        move = None
+        if self.move is not None:
+            move = np.copy(self.move)
+        rotate = None
+        if self.rotate is not None:
+            rotate = np.copy(self.rotate)
+        return Transformation(move=move, rotate=rotate)
+
 class Cell(BaseModel):
     yaml_tag = u'!cell'
     card_option_types = {
@@ -15,11 +52,12 @@ class Cell(BaseModel):
         'TRCL': [int],
         'INNER': [bool],
         'IMP:N': [float],
-        'IMP:P': [float]
+        'IMP:P': [float],
+        'IMP:E': [float]
     }
 
     def __init__(self, number=-1, bounds='', material=None, density=None, fill=None, inner=False, u=0, lat=None,
-                 unparsed=None, impn=None, impp=None):
+                 unparsed=None, impn=None, impp=None, impe=None):
         self.number = number
         self.bounds = bounds
         self.fill = fill
@@ -31,6 +69,7 @@ class Cell(BaseModel):
         self.unparsed = unparsed
         self.impn = impn
         self.impp = impp
+        self.impe = impe
 
     def check(self):
         assert self.number >= 0
@@ -50,6 +89,8 @@ class Cell(BaseModel):
             self.impn = options['IMP:N']
         if 'IMP:P' in options.keys():
             self.impp = options['IMP:P']
+        if 'IMP:E' in options.keys():
+            self.impe = options['IMP:E']
 
     def __str__(self):
         s = '%d %d ' % (self.number, self.material)
