@@ -269,6 +269,10 @@ class Surface(BaseModel):
         if self._value is not None:
             card += ' value = ' + ' '.join([str(x) for x in self._value])
             card += ' time = ' + ' '.join([str(x) for x in self._time])
+        if self._move is not None:
+            card += ' move = ' + ' '.join([str(x) for x in self._move])
+        if self._rotate is not None:
+            card += ' rotate = ' + ' '.join([str(x) for x in self._rotate.reshape([9])])
         card += '\n'
         return card
 
