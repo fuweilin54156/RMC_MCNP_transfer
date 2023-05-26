@@ -72,7 +72,7 @@ class Cell(BaseModel):
     }
 
     def __init__(self, number=-1, bounds='', material=None, density=None, fill=None, inner=False, u=0, lat=None,
-                 unparsed=None, impn=None, impp=None, impe=None, trcl=None):
+                 unparsed=None, impn=None, impp=None, impe=None, trcl=None, likeid=None):
         self.number = number
         self.bounds = bounds
         self.fill = fill
@@ -86,6 +86,7 @@ class Cell(BaseModel):
         self.impp = impp
         self.impe = impe
         self.trcl = trcl
+        self.likeid = likeid
 
     def check(self):
         assert self.number >= 0

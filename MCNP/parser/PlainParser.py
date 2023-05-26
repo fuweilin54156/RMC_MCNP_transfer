@@ -78,7 +78,7 @@ class PlainParser:
                                 surface.tr.move = tr_model[i].move
                                 surface.tr.rotate = tr_model[i].rotate
 
-            self.parsed_model.model['unparsed'] = other_cards[2]
+            self.parsed_model.model['unparsed'] = other_cards[3]
 
         self.parsed_model.model['surface'] = surface_model
         self.parsed_model.model['geometry'] = geometry_model
@@ -187,7 +187,8 @@ class PlainParser:
                     if unpar is not '':
                         surf_unparsed += 'Warning: No parsed card: ' + str(unpar) + ' '
                     surface = Surface(number=surf_id, stype=surf_type, parameters=surf[surf_type],
-                                      boundary=surf_boundary, pair=surf_pair, tr=Transformation(num=surf_tr), unparsed=surf_unparsed)
+                                      boundary=surf_boundary, pair=surf_pair, tr=Transformation(num=surf_tr),
+                                      unparsed=surf_unparsed)
                     surfaces.append(surface)
                 else:
                     unparsed += option + '\n'
@@ -268,16 +269,16 @@ class PlainParser:
                 cell_card_options = copy.deepcopy(Cell.card_option_types)
                 if index != cell_len:
                     unparsed_items = ' '.join(cell.split()[index:])
-                    unparsed_items = unparsed_items.replace('*trcl', "trcl")
-                    unparsed_items = unparsed_items.replace('*TRCL', "TRCL")
+                    # unparsed_items = unparsed_items.replace('*trcl', "trcl")
+                    # unparsed_items = unparsed_items.replace('*TRCL', "TRCL")
                     while unparsed_items is not '':
                         if 'LAT' in cell_dict and 'FILL' in cell_card_options:
                             cell_card_options.pop('FILL')
                         [cell_dict_item, unparsed_items_new] = PlainParser._parse_option(unparsed_items,
                                                                                          cell_card_options)
                         if cell_dict_item:
-                            cell_dict[unparsed_items.split()[0].upper()] = cell_dict_item[
-                                unparsed_items.split()[0].upper()]
+                            for key in cell_dict_item:
+                                cell_dict[key] = cell_dict_item[key]
                         if unparsed_items_new is '':
                             unparsed_items = unparsed_items_new
                         elif unparsed_items.split()[0] == unparsed_items_new.split()[0]:
@@ -286,14 +287,53 @@ class PlainParser:
                         else:
                             unparsed_items = unparsed_items_new
 
-                parsed_cell = Cell(number=cell_id, material=mat_id, density=mat_density, bounds=cell_geom, unparsed=unparsed)
+                parsed_cell = Cell(number=cell_id, material=mat_id, density=mat_density, bounds=cell_geom,
+                                   unparsed=unparsed)
                 parsed_cell.add_options(cell_dict)
                 if parsed_cell.trcl is not None:
                     parsed_cell.trcl.process()
                 cells.append(parsed_cell)
 
             else:  # like 'j LIKE n BUT list'
-                geo_unparsed += cell + '\n'
+                likeid = int(cell.split()[2])
+                unparsed_items = ' '.join(cell.split()[4:])
+                while unparsed_items is not '':
+                    if 'LAT' in cell_dict and 'FILL' in cell_card_options:
+                        cell_card_options.pop('FILL')
+                    [cell_dict_item, unparsed_items_new] = PlainParser._parse_option(unparsed_items,
+                                                                                     cell_card_options)
+                    if cell_dict_item:
+                        for key in cell_dict_item:
+                            cell_dict[key] = cell_dict_item[key]
+                    if unparsed_items_new is '':
+                        unparsed_items = unparsed_items_new
+                    elif unparsed_items.split()[0] == unparsed_items_new.split()[0]:
+                        unparsed += ' ' + unparsed_items.split()[0]
+                        unparsed_items = ' '.join(unparsed_items.split()[1:])
+                    else:
+                        unparsed_items = unparsed_items_new
+                # geo_unparsed += cell + '\n'
+
+                parsed_cell = Cell(number=cell_id, likeid=likeid, unparsed=unparsed)
+                parsed_cell.add_options(cell_dict)
+                if parsed_cell.trcl is not None:
+                    parsed_cell.trcl.process()
+                for cell in cells:
+                    if cell.number == likeid:
+                        if parsed_cell.material is None:
+                            parsed_cell.material = cell.material
+                        if parsed_cell.bounds is '':
+                            parsed_cell.bounds = cell.bounds
+                        if parsed_cell.density is None:
+                            parsed_cell.density = cell.density
+                        if parsed_cell.universe is None:
+                            parsed_cell.universe = cell.universe
+                        if parsed_cell.lat is None:
+                            parsed_cell.lat = cell.lat
+                        if parsed_cell.fill is None:
+                            parsed_cell.fill = cell.fill
+                        break
+                cells.append(parsed_cell)
         return [cells, geo_unparsed]
 
     @staticmethod
@@ -304,18 +344,26 @@ class PlainParser:
         unparsed = []
         index = 0
         options[0] = options[0].upper()
-        if options[0] in cards:
-            dtype = cards[options[0]]
+
+        matched_key = None
+        for key in cards.keys():
+            if re.match(key, options[0], re.I) and key[-1] == options[0][-1]:
+                matched_key = key
+                break
+        if matched_key is None:
+            unparsed = ' '.join(options[index:])
+            return [options_dict, unparsed]
+        else:
+            dtype = cards[matched_key]
             if dtype[0] == 'list':
                 [opt_val, index] = PlainParser._parse_list(options, dtype[1])
             else:
                 [opt_val, index] = PlainParser._parse_val(options, dtype[0])
 
-            options_dict[options[0]] = opt_val
+            options_dict[matched_key] = opt_val
             # 移除已经解析过的部分
-        unparsed = ' '.join(options[index:])
-
-        return [options_dict, unparsed]
+            unparsed = ' '.join(options[index:])
+            return [options_dict, unparsed]
 
     @staticmethod
     def _parse_list(options, func=str):
