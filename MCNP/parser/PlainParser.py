@@ -148,9 +148,14 @@ class PlainParser:
         opts = mat_card.split()
         mat = Material(mat_id=int(opts[0][1:]))
         i = 1
-        while i < len(opts):
-            mat.update_nuclide(Nuclide(opts[i], opts[i + 1]))
-            i += 2
+        while i < len(opts)-1:
+            try:
+                value = float(opts[i + 1])
+                mat.update_nuclide(Nuclide(opts[i], opts[i + 1]))
+                i += 2
+            except ValueError:
+                print("Warning: mat " + str(opts[0][1:]) + " was not fully parsed!")
+                break
         return mat
 
     @staticmethod
