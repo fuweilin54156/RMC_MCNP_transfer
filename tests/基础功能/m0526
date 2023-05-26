@@ -1,0 +1,60 @@
+PS2346BY,38.7 gPu/l,1.300g/cc, 7.7N,517.58gNO3/l,30cm H2O, Sph., 4.57% Pu240 
+C   Volume = 30.221 l.
+C   Changed total atoms/cc from 9.86467-02 to 9.864674-02 
+1  0                5                    imp:n=0 $ Outside Everything
+2  1  9.864674-02  -1   -3               imp:n=1 $ Pu(NO3)4 Solution
+3  2  8.62396-02    1   -2  #6  #7       imp:n=1 $ SS347 Sphere
+4  3  9.99820-02    2    4  -5  #6 #7 #8 imp:n=1 $ 30 cm Water Upper Hemisphere
+5  3  9.99820-02    2   -4  -5  #9 #10   imp:n=1 $ 30 cm Water Lower Hemisphere
+6  1  9.864674-02   1   -3   4  -7       imp:n=1 $ Liquid in Support Tube
+7  0                3    4  -5  -7       imp:n=1 $ Air in Support Tube
+8  2  8.62396-02    2    4  -5  -6   7   imp:n=1 $ SS347 Top Support Tube
+9  0                2   -4  -5  -9       imp:n=1 $ Air in Bottom Tube
+10  2  8.62396-02    2   -4  -5  -8   9   imp:n=1 $ SS347 Bottom Tube
+                                                      
+1   so    19.3208           $ Sphere Inner Radius
+2   so    19.4427           $ Sphere Outer Radius
+3   px    19.3208           $ Liquid Level
+4   px     0.0              $ Model Middle
+5   so    49.4427           $ Outer Surface
+6  c/x   0.0  3.811  2.8575 $ Top Support Tube OD
+7  c/x   0.0  3.811  2.6924 $ Top Support Tube ID
+8   cx     2.86             $ Bottom Tube OD
+9   cx     2.555            $ Bottom Tube ID
+
+mode n
+kcode    2000 1.0  50  1550
+sdef pos 0.0 0.0 0.0 rad d1 
+sc1  Spherical Source about origin
+si1    19.31
+m1     94238.66c  5.8741e-09  
+       94239.66c  9.2648e-05    $ Solution
+       94240.66c  4.5329e-06  
+       94241.66c  2.7361e-07
+       94242.66c  8.6652e-09  
+        7014.66c  5.0269e-03
+        1001.66c  5.3840e-02   
+        8016.66c  3.9682e-02
+m2  
+      26054.66c 3.44259E-03
+      26056.66c 5.44879E-02
+      26057.66c 1.24646E-03
+      26058.66c 1.78065E-04 $ SS304L
+      24050.66c 7.57966E-04
+      24052.66c 1.46000E-02
+      24053.66c 1.65533E-03
+      24054.66c 4.14703E-04
+      28058.66c 5.27065E-03
+      28060.66c 2.01500E-03
+      28061.66c 8.72394E-05
+      28062.66c 2.77159E-04
+      28064.66c 7.02547E-05
+      25055.66c 1.7363e-03
+C  sum   8.623960E-02      
+m3      1001.66c  6.6655-02  
+        8016.66c  3.3327-02    $ Water
+mt1    lwtr.01t                           $S(Alpha,Beta) 
+mt3    lwtr.01t                           $S(Alpha,Beta) 
+totnu 
+prdmp             
+print    40 50 60 -175 -178

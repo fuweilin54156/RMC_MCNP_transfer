@@ -1,0 +1,121 @@
+UNIVERSE 0 
+CELL 1 -6 fill=1
+CELL 2 6 void=1
+
+UNIVERSE 1 
+CELL 31 ( 7 & -8 & 9 & -10 ) : ( 11 & -12 & 13 & -14 ) fill=2
+CELL 41 ( ( -7 : 8 : -9 : 10 )&( -11 : 12 : -13 : 14 ) ) mat=5
+
+UNIVERSE 2 move=-6 -6 0 LAT=1 SCOPE=3 3 1 PITCH=4.0 4.0 1.0 FILL=
+ 10 3 10
+ 11 3 5
+ 10 11 10
+
+UNIVERSE 10 
+CELL 111 -1 : 1 mat=5
+
+UNIVERSE 11 move=2 2 0 
+CELL 3 -15 : 16 : -17 : 18 mat=5
+CELL 4 15 & -16 & 17 & -18 fill=21
+
+UNIVERSE 21 move=-1.89 -1.89 0 LAT=1 SCOPE=3 3 1 PITCH=1.26 1.26 1.0 FILL=
+ 34 31 31
+ 31 34 31
+ 31 31 31
+
+UNIVERSE 12 move=2 2 0 
+CELL 5 -15 : 16 : -17 : 18 mat=5
+CELL 6 15 & -16 & 17 & -18 fill=22
+
+UNIVERSE 22 move=-1.89 -1.89 0 LAT=1 SCOPE=3 3 1 PITCH=1.26 1.26 1.0 FILL=
+ 35 32 32
+ 32 35 32
+ 32 32 32
+
+UNIVERSE 31 move=0.63 0.63 0 
+CELL 43 -1 mat=-1 inner=1 tmp=300.0
+CELL 44 1 & -2 mat=3 inner=1
+CELL 45 2 & -3 mat=4 inner=1
+CELL 46 3 mat=5
+
+UNIVERSE 32 move=0.63 0.63 0 
+CELL 53 -1 mat=-2 inner=1 tmp=300.0
+CELL 54 1 & -2 mat=3 inner=1
+CELL 55 2 & -3 mat=4 inner=1
+CELL 56 3 mat=5
+
+UNIVERSE 34 move=0.63 0.63 0 
+CELL 47 -4 mat=5 inner=1
+CELL 48 4 & -5 mat=4 inner=1
+CELL 49 5 mat=5
+
+UNIVERSE 35 move=0.63 0.63 0 
+CELL 57 -4 mat=6 inner=1
+CELL 58 4 & -19 mat=4 inner=1
+CELL 59 19 mat=5
+
+UNIVERSE 3 move=2 2 0 
+CELL 7 -15 : 16 : -17 : 18 mat=5
+CELL 8 15 & -16 & 17 & -18 fill=4
+
+UNIVERSE 4 move=-1.89 -1.89 0 LAT=1 SCOPE=3 3 1 PITCH=1.26 1.26 1.0 FILL=
+ 35 31 31
+ 31 35 31
+ 31 31 31
+
+UNIVERSE 5 move=2 2 0 
+CELL 9 -15 : 16 : -17 : 18 mat=5
+CELL 10 15 & -16 & 17 & -18 fill=6
+
+UNIVERSE 6 move=-1.89 -1.89 0 LAT=1 SCOPE=3 3 1 PITCH=1.26 1.26 1.0 FILL=
+ 34 32 32
+ 32 34 32
+ 32 32 32
+
+SURFACE
+Surf 1 cz 0.4096
+Surf 2 cz 0.4178
+Surf 3 cz 0.475
+Surf 4 cz 0.569
+Surf 5 cz 0.6147
+Surf 6 cz 7
+Surf 7 px -2
+Surf 8 px 2
+Surf 9 py -6
+Surf 10 py 6
+Surf 11 py -2
+Surf 12 py 2
+Surf 13 px -6
+Surf 14 px 6
+Surf 15 px -1.89
+Surf 16 px 1.89
+Surf 17 py -1.89
+Surf 18 py 1.89
+Surf 19 cz 0.62
+
+
+REFUELLING
+FILE refuelling.yml
+REFUEL step= 2 index= 3
+
+INCLUDE material_1
+
+CRITICALITY
+PowerIter keff0 = 0.244699 population = 1000 10 20
+InitSrc POINT = 0.63 0.63 0
+
+
+BURNUP
+BurnCell 43 53
+TimeStep 2.0 1.0 2.0 1.0
+Power 30.0 30.0 30.0 30.0
+Inherent 0.9999
+Acelib .71c
+Parallel 1
+OutputCell 1 > 31 > 4 > 4 > 2 > 43
+Depthlib DepthMainLib
+
+
+PRINT
+inpfile 1
+CsTally 0

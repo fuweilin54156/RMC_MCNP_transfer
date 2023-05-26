@@ -1,0 +1,41 @@
+UNIVERSE 0
+cell 1   -1      mat = 1           // sphere inside
+cell 2   1 & -2  mat = 1           // sphere middle
+cell 3   2 & -3  mat = 2           // sphere outside
+cell 4   3       mat = 0  void = 1
+
+SURFACE
+surf  1  so  10
+surf  2  so  20
+surf  3  so  30
+
+MATERIAL
+mat 1  -10.045   // Fuel
+    92235.71c   6.89220E-03
+    92238.71c   2.17104E-02
+    8016.71c    4.48178E-02
+mat 2  -0.9     // Water
+    1001.71c   2.0
+    8016.71c   1.0
+sab 2  HH2O.71t
+
+FixedSource
+particle population = 10000 fission= 1 1
+cutoff maxlost=10 minweight=0.25 0.6 maxweight=1.4
+load_balance method=0 interval=60
+
+Physics
+ParticleMode N P E
+Neutron minenergy=1E-20
+Photon    PPRODUCEE=1  TTB=0  ANNIHILATION=0  COHERENT=1
+          PHOTONNUCLEUS=0  DOPPLER=1  UPERERG=100  ERGCUTGMA=1.0E-3  ELECMULTITIMES=1.0
+Electron  MaxEnergy=100  MinEnergy=1.0E-3  EPRODUCEP=1  ErgLossStraggle=1  BREMS=1
+          BREMSANGLE=1  BREMSEACHSUBTEP=0  BREMSERGLOSSMETHOD=1  BREMSPHOTONMULTITIMES=1.0
+          XRAYMULTITIMES=1.0  KNOCKONMULTITIMES=0.0
+
+EXTERNALSOURCE
+Source 1 particle = 1 energy = 0.1 sphere = 0 0 0 0 5
+
+Tally
+CellTally  5  type = 1  cell = 1 2  time=0 5.0e-8  1.0e-7  5.0e-7 1.0e-6
+CellTally  6  type = 2  cell = 1 2  energy = 0 6.25E-7 20 time=0 5.0e-8  1.0e-7  5.0e-7 1.0e-6

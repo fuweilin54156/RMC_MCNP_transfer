@@ -18,6 +18,7 @@ class YMLModelObject(yaml.YAMLObject):
     Note that, that process will not call the __init__ method, and some unexpected parameters
     can be introduced into the parameter dict, therefore, a checking method is required.
     """
+
     # todo: check method should be called after construction, and the __dict__ should be checked
     #       to avoid unexpected parameters from wrong input files.
     @abc.abstractmethod
@@ -48,6 +49,12 @@ class Model(YMLModelObject):
                 'tally': None,
                 'print': None,
                 'mesh': None,
+                'binaryout': None,
+                'externalsource': None,
+                'ptrac': None,
+                'macrobody': None,
+                'physics': None,
+                'fixedsource': None
             }
         self.model = model
 
@@ -58,15 +65,41 @@ class Model(YMLModelObject):
 
     def postprocess(self):
         self.check()
-        self.proc_lat5()
-        if self.model['geometry'] is not None:
-            self.model['geometry'].postprocess()
-
-    def proc_lat5(self):
-        post_surfs = self.model['geometry'].proc_lat5()
+        if self.model['surface']:
+            surf_max_id = self.model['surface'].get_max_surf_id()
+        else:
+            surf_max_id = 0
+        if self.model['macrobody']:
+            for macrobody in self.model['macrobody'].macrobodies.values():
+                surfaces = macrobody.transfer(max_surf_id=surf_max_id)
+                if self.model['surface']:
+                    self.model['surface'].surfaces.extend(surfaces.surfaces)
+                else:
+                    self.model['surface'] = surfaces
+                surf_max_id += len(surfaces.surfaces)
+            if self.model['tally']:
+                self.model['tally'].pro_tally(macrobodies=self.model['macrobody'].macrobodies)
+            if self.model['binaryout']:
+                self.model['binaryout'].pro_binaryout(macrobodies=self.model['macrobody'].macrobodies)
+            if self.model['externalsource']:
+                self.model['externalsource'].pro_source(macrobodies=self.model['macrobody'].macrobodies)
+            if self.model['ptrac']:
+                self.model['ptrac'].pro_ptrac(macrobodies=self.model['macrobody'].macrobodies)
+            self.model['geometry'].trans_cell(macrobodies=self.model['macrobody'].macrobodies)
+            del self.model['macrobody']
+        post_surfs = self.model['geometry'].proc_lat5(surf_max_id)  # process the lat=5 cases
         if post_surfs:
             for surf in post_surfs:
                 self.model['surface'].add_surface(surf)
+        if self.model['geometry'] is not None:
+            self.model['geometry'].postprocess()
+        if self.model['externalsource'] is not None:
+            self.model['externalsource'].postprocess()
+            # process the cell expansion
+            for source in self.model['externalsource'].source:
+                source.postprocess(geometry=self.geometry)
+            for distribution in self.model['externalsource'].distributions:
+                distribution.postprocess(geometry=self.geometry)
 
     # todo: the sequence of output has not been defined.
     def __str__(self):
@@ -76,7 +109,7 @@ class Model(YMLModelObject):
                 s += str(self.model[key])
         for card in self.model['unparsed']:
             s += card + '\n\n'
-        return s
+        return s.strip('\n') + '\n'
 
     @property
     def geometry(self):

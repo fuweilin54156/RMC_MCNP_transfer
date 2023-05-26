@@ -1,0 +1,72 @@
+UNIVERSE 0 
+CELL 1 1 : -2 : -4 : 5 : 6 : -7 mat=0 void=1
+CELL 2 -1&2&4&-5&-6&7 mat=0 fill=1
+
+UNIVERSE 1 move=-50 -50 30 rotate=-0.211324865405 0.788675134595 -0.57735026919 0.788675134595 -0.211324865405 -0.57735026919 0.57735026919 0.57735026919 0.57735026919 LAT=1 SCOPE=30 30 30 PITCH=6.0 6.0 6.0 FILL=223 * 27000
+
+UNIVERSE 111 
+CELL 111 35 mat=1
+CELL 112 -35 mat=2
+
+UNIVERSE 222 
+CELL 222 3&-1 mat=3
+
+UNIVERSE 223 
+CELL 237 36&37&38&39&40&41&42&43&44&45&46&47&48&49 fill=222
+CELL 223 -36 fill=111 move=0 0 0
+CELL 224 -36 fill=111 move=6 0 0
+CELL 225 -36 fill=111 move=6 6 0
+CELL 226 -36 fill=111 move=0 6 0
+CELL 227 -36 fill=111 move=0 0 6
+CELL 228 -36 fill=111 move=6 0 6
+CELL 229 -36 fill=111 move=6 6 6
+CELL 230 -36 fill=111 move=0 6 6
+CELL 231 -36 fill=111 move=3 0 3
+CELL 232 -36 fill=111 move=6 3 3
+CELL 233 -36 fill=111 move=3 6 3
+CELL 234 -36 fill=111 move=0 3 3
+CELL 235 -36 fill=111 move=3 3 6
+CELL 236 -36 fill=111 move=3 3 0
+
+SURFACE
+Surf 1 px 50 bc = 3 pair = 2
+Surf 2 px 0 bc = 3 pair = 1
+Surf 3 px -50
+Surf 4 py -20
+Surf 5 py 20
+Surf 6 pz 20 bc = 2
+Surf 7 pz -20 bc = 2
+Surf 35 s 0 0 0 1.5
+Surf 36 s 0 0 0 2.12132
+Surf 37 s 6 0 0 2.12132
+Surf 38 s 6 6 0 2.12132
+Surf 39 s 0 6 0 2.12132
+Surf 40 s 0 0 6 2.12132
+Surf 41 s 6 0 6 2.12132
+Surf 42 s 6 6 6 2.12132
+Surf 43 s 0 6 6 2.12132
+Surf 44 s 3 0 3 2.12132
+Surf 45 s 6 3 3 2.12132
+Surf 46 s 3 6 3 2.12132
+Surf 47 s 0 3 3 2.12132
+Surf 48 s 3 3 6 2.12132
+Surf 49 s 3 3 0 2.12132
+
+
+MATERIAL
+Mat 1 -0.9 6000.71c .4 8016.71c .2
+Mat 2 -18 92238.71c .98 92235.71c .02
+Mat 3 -18 92238.71c .98 92235.71c .02
+
+
+CRITICALITY
+PowerIter population = 500 5 20 keff0 = 1.0
+InitSrc point = 5 5 5
+
+
+PLOT
+colorscheme = 1 Continue-calculation = 1
+plotID 1 type = slice color = mat pixels = 10000 10000 vertexes = -5 -30 19.9 55 30 19.9
+plotID 2 type = slice color = mat pixels = 10000 10000 vertexes = -5 -30 0 55 30 0
+plotID 3 type = slice color = mat pixels = 10000 10000 vertexes = -5 -30 -19.9 55 30 -19.9
+

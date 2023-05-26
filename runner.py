@@ -20,7 +20,7 @@ import os
 import re
 
 
-print("Hello! Start with the MCNP to RMC transformation tools! \nAuthor: ShenPF")
+print("Hello! Start with the MCNP to RMC transformation tools! \nAuthor: Shen Pengfei")
 
 # files = ['0'+str(i+1) for i in range(8)]
 # for file in files:

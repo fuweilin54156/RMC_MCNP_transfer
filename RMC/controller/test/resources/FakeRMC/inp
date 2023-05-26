@@ -386,7 +386,7 @@ Power 36.574*2
 Inherent 0.9999
 Substep 10
 AceLib .30c
-Strategy 0
+Strategy type=0
 Parallel 1
 succession singlestep = 1
 

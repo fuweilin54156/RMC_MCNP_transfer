@@ -66,8 +66,8 @@ def transfer(inp_MCNP):
         out_universe_id = 0
         if cell.universe:
             out_universe_id = cell.universe
-        R_cell = RMCGeometry.Cell(number=cell.number, bounds=cell.bounds.replace('#', '!'), material=cell.material,
-                                  fill=cell.fill, impn=cell.impn)
+        R_cell = RMCGeometry.Cell(number=cell.number, bounds=cell.bounds.replace('#', '!'), material=[cell.material],
+                                  fill=cell.fill, imp_n=cell.impn, imp_p=cell.impp)
 
         established_univ = False
         for index in range(len(R_universes_ids)):
@@ -103,8 +103,10 @@ def transfer(inp_MCNP):
     R_model.model['surface'] = R_surfaces_model
     R_model.model['material'] = R_materials_model
 
-    R_model.model['criticality'] = RMCCriticality.Criticality(
-        unparsed='PowerIter population = 10000 50 300  keff0 = 1\nInitSrc point = 0 0 0')
+    # set the Criticality block
+    power_iter={"KEFF0":1, "POPULATION":[10000, 50, 300], "BATCHNUM":1}
+    R_model.model['criticality'] = RMCCriticality.Criticality(power_iter=power_iter,
+        unparsed='InitSrc point = 0 0 0')
     R_model.model['plot'] = 'PLOT Continue-calculation = 1\nPlotID 1 Type = slice Color = cell Pixels=10000 10000 Vertexes=-100 -100 0 100 100 0\nPlotID 2 type = slice color = cell pixels=10000 10000 vertexes=-100 0 -100 100 0 100'
 
     # output 2 files

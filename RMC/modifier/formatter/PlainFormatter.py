@@ -48,10 +48,20 @@ class PlainFormatter:
         while self._s_changed:
             self._s_changed = False
             changed_inp = re.sub(r'[\t\r\f\v]', ' ', self.content)
-            changed_inp = re.sub(r'(?P<char>[^ ])=', '\g<char> =', changed_inp)
-            changed_inp = re.sub(r'=(?P<char>[^ ])', '= \g<char>', changed_inp)
-            changed_inp = re.sub(r'(?P<char>[^ ])\*', '\g<char> *', changed_inp)
-            changed_inp = re.sub(r'\*(?P<char>[^ ])', '* \g<char>', changed_inp)
+            changed_inp = re.sub(r'(?P<char>[^ ])=', r'\g<char> =', changed_inp)
+            changed_inp = re.sub(r'=(?P<char>[^ ])', r'= \g<char>', changed_inp)
+            changed_inp = re.sub(r'(?P<char>[^ ])\*', r'\g<char> *', changed_inp)
+            changed_inp = re.sub(r'\*(?P<char>[^ ])', r'* \g<char>', changed_inp)
+            changed_inp = re.sub(r'\((?P<char>[^ ])', r'( \g<char>', changed_inp)
+            changed_inp = re.sub(r'(?P<char>[^ ])\)', r'\g<char> )', changed_inp)
+            changed_inp = re.sub(r'>(?P<char>[^ ])', r'> \g<char>', changed_inp)
+            changed_inp = re.sub(r'(?P<char>[^ ])>', r'\g<char> >', changed_inp)
+            changed_inp = re.sub(r':(?P<char>[^ ])', r': \g<char>', changed_inp)
+            changed_inp = re.sub(r'(?P<char>[^ ]):', r'\g<char> :', changed_inp)
+            changed_inp = re.sub(r'D(\d+)', r'D \g<1>', changed_inp)
+            changed_inp = re.sub(r'd(\d+)', r'd \g<1>', changed_inp)
+            changed_inp = re.sub(r'B(\d+)', r'B \g<1>', changed_inp)
+            changed_inp = re.sub(r'b(\d+)', r'b \g<1>', changed_inp)
             changed_inp = changed_inp.replace('  ', ' ')
             changed_inp = changed_inp.replace('\n\n\n', '\n\n')
             changed_inp = re.sub(r'[ ]+\n', '\n', changed_inp)
@@ -62,7 +72,7 @@ class PlainFormatter:
             # Remove the variable definition
             changed_inp = re.sub(r'\n[ ]*@.*\n', '\n', changed_inp)
             # Remove the inline comments.
-            changed_inp = re.sub(r'\n(?P<content>[ ]*[^ ]+.*?)//[^\n]*\n', '\n\g<content>\n', changed_inp)
+            changed_inp = re.sub(r'\n(?P<content>[ ]*[^ ]+.*?)//[^\n]*\n', r'\n\g<content>\n', changed_inp)
             self._s_changed = (changed_inp != self.content)
             self.content = changed_inp
 

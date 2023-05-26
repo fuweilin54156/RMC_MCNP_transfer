@@ -1,0 +1,49 @@
+linux
+mpiexec -n 200 workspace/RMC -s 12 workspace/inp -r workspace/inp.binary  --status workspace/status
+mpiexec -n 1 rmc2ctf
+mpiexec -n 177 cobratf
+mpiexec -n 1 cobratf_preproc
+mpiexec -n 1 ctf2rmc
+
+tianhe2
+yhrun -N 100 -n 200 -c 12 workspace/RMC -s 12 workspace/inp -r workspace/inp.binary  --status workspace/status
+yhrun -N 1 -n 1 rmc2ctf
+yhrun -N 8 -n 177 cobratf
+yhrun -N 1 -n 1 cobratf_preproc
+yhrun -N 1 -n 1 ctf2rmc
+
+tianhe3
+yhrun -N 75 -n 200 -c 12 workspace/RMC -s 12 workspace/inp -r workspace/inp.binary  --status workspace/status
+yhrun -N 1 -n 1 rmc2ctf
+yhrun -N 6 -n 177 cobratf
+yhrun -N 1 -n 1 cobratf_preproc
+yhrun -N 1 -n 1 ctf2rmc
+
+tianhe3_hpc4
+yhrun -N 67 -n 200 -c 12 workspace/RMC -s 12 workspace/inp -r workspace/inp.binary  --status workspace/status
+yhrun -N 1 -n 1 rmc2ctf
+yhrun -N 5 -n 177 cobratf
+yhrun -N 1 -n 1 cobratf_preproc
+yhrun -N 1 -n 1 ctf2rmc
+
+tianhe3_hpc5
+yhrun -N 43 -n 200 -c 12 workspace/RMC -s 12 workspace/inp -r workspace/inp.binary  --status workspace/status
+yhrun -N 1 -n 1 rmc2ctf
+yhrun -N 4 -n 177 cobratf
+yhrun -N 1 -n 1 cobratf_preproc
+yhrun -N 1 -n 1 ctf2rmc
+
+yinhe
+yhrun -N 120 -n 200 -c 12 workspace/RMC -s 12 workspace/inp -r workspace/inp.binary  --status workspace/status
+yhrun -N 1 -n 1 rmc2ctf
+yhrun -N 9 -n 177 cobratf
+yhrun -N 1 -n 1 cobratf_preproc
+yhrun -N 1 -n 1 ctf2rmc
+
+bscc
+srun -n 200 -c 12 workspace/RMC -s 12 workspace/inp -r workspace/inp.binary  --status workspace/status
+srun -n 1 rmc2ctf
+srun -n 177 cobratf
+srun -n 1 cobratf_preproc
+srun -n 1 ctf2rmc
+

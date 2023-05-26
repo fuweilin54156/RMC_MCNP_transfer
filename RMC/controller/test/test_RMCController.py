@@ -8,6 +8,20 @@ import unittest
 from unittest import TestCase
 from RMC.controller.rmc import RMCController
 
+from pathlib import Path
+
+dir_path = Path(os.path.dirname(os.path.abspath(__file__)))
+
+original_path = os.getcwd()
+
+
+def setUpModule():
+    os.chdir(dir_path)
+
+
+def tearDownModule():
+    os.chdir(original_path)
+
 
 class TestRMCController(TestCase):
     controller = None
@@ -30,14 +44,15 @@ class TestRMCController(TestCase):
             os.remove(os.path.join(cls.base_dir, file))
 
     def test_check(self):
-        inp = 'resources/inp'
-        status_file = 'resources/status.txt'
-        controller = RMCController(inp)
+        inp = 'resources/RMCController/inp'
+        archive = "resources/RMCController/archive"
+        status_file = 'resources/RMCController/status.txt'
+        controller = RMCController(inp, archive)
         result = controller.check(status_file)
         self.assertEqual(result, [True])
 
     def test_new_inp_archive(self):
-        self.assertEqual(self.controller.new_inp_archive(),
+        self.assertEqual(self.controller._new_inp_archive(),
                          ['resources/RMCController/inp.burnup.0.couple.1',
                           'resources/RMCController/archive/burnup0/couple1'])
 
@@ -45,7 +60,7 @@ class TestRMCController(TestCase):
         self.controller.generate_tally_hdf(
             self.controller.model['tally'].meshtally[0], self.base_dir)
         h5diff = 'h5diff -r --delta=1E-15 ' + \
-                 os.path.join(self.base_dir, 'reference.h5') + ' ' +\
+                 os.path.join(self.base_dir, 'reference.h5') + ' ' + \
                  os.path.join(self.base_dir, 'MeshTally1.h5')
         p_h5diff = subprocess.Popen(h5diff, stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE, shell=True,
@@ -69,11 +84,11 @@ class TestRMCController(TestCase):
             os.path.join(self.base_dir, 'archive', 'burnup1', 'couple6')
         self.controller.last_inp = \
             os.path.join('inp.burnup.1.couple.6')
-        self.controller.iteration = 3
-        self.controller.model['burnup'].current_step = 2
+        self.controller._indexes = [2, 2, 0]
 
         # 测试函数生成的文件
         self.controller.continuing('resources/status.txt', controller_property)
+        print(f"converted file is {controller_property['inp']}")
         self.assertTrue(
             filecmp.cmp(controller_property['inp'],
                         os.path.join(self.base_dir, 'reference_inp')),

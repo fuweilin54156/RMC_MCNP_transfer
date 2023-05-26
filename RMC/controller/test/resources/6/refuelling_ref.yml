@@ -1,0 +1,54 @@
+refuelling: !refuelling
+  lists:
+  - !do_refuel
+    step: 1
+    plan:
+    - !refuel_univ
+      universe: 2
+      position:
+      - [1, 31]
+      pattern: univ_2
+      mapping:
+      - [0, B002, 0]
+      - [NEW_12, C002, B001]
+      - [0, A002, 0]
+    poison_universe: null
+    guide_tube: null
+    poison_rod: null
+  - !do_refuel
+    step: 3
+    plan:
+    - !refuel_univ
+      universe: 2
+      position:
+      - [1, 31]
+      pattern: univ_2
+      mapping:
+      - [0, A002, 0]
+      - [B002, NEW_11, NEW_15]
+      - [0, C002, 0]
+    poison_universe: null
+    guide_tube: null
+    poison_rod: null
+  utilities:
+    universes:
+      univ_2:
+        alias:
+          column: [A, B, C]
+          row: [1, 2, 3]
+          new: NEW_
+        fixed:
+          pattern1:
+            assemblies: [A002, B002]
+            default_pin: 34
+            position:
+            - [1, 1]
+            - [2, 2]
+            - [3, 3]
+        assemblies:
+        - [10, 0]
+        - [11, 21]
+        - [12, 22]
+        - [13, 23]
+        - [14, 24]
+        - [15, 25]

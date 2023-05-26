@@ -53,7 +53,7 @@ TimeStep    5
 Power       30
 Substep     10
 AceLib      .71c
-Strategy    0
+Strategy    type=0
 Solver      2
 outputcell  1 > 1 > 3
 

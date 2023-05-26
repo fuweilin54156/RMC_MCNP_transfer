@@ -7,6 +7,17 @@ import unittest
 from unittest import TestCase
 from RMC.controller.rmc import FakeRMC
 
+from pathlib import Path
+dir_path = Path(os.path.dirname(os.path.abspath(__file__)))
+
+original_path = os.getcwd()
+
+def setUpModule():
+    os.chdir(dir_path)
+
+def tearDownModule():
+    os.chdir(original_path)
+
 
 class TestFakeRMC(TestCase):
     fake_rmc = None

@@ -1,0 +1,117 @@
+UNIVERSE 0 
+CELL 1001 1011 & -1012 & 1013 & -1014 & 1091 & -1092 fill=96
+CELL 1006 ( -1011 : 1012 : -1013 : 1014 : -1091 : 1092 ) void=1
+
+UNIVERSE 96 
+CELL 1011 1001 & -1002 & 1003 & -1004 fill=99
+CELL 1012 ( -1001 : 1002 : -1003 : 1004 ) mat=3 tmp=300.0
+
+UNIVERSE 99 LAT=1 SCOPE=7 8 1 PITCH=7.72 7.72 1.0 FILL=
+ 8 8 8 8 8 8 8
+ 8 1 1 1 1 8 8
+ 8 1 1 1 1 8 8
+ 8 1 8 8 1 8 8
+ 8 1 8 8 1 8 8
+ 8 1 1 1 1 8 8
+ 8 1 1 1 1 8 8
+ 8 8 8 8 8 8 8
+
+UNIVERSE 1 move=0.05 0.118 0 
+CELL 1121 1121 & -1125 & 1131 & -1132 & 1191 & -1192 mat=2 tmp=300.0
+CELL 1122 1121 & -1122 & 1132 & -1135 & 1191 & -1192 mat=3 tmp=300.0
+CELL 1123 1121 & -1125 & 1135 & -1136 & 1191 & -1192 mat=2 tmp=300.0
+CELL 1124 1122 & -1123 & 1132 & -1135 & 1191 & -1192 mat=2 tmp=300.0
+CELL 1125 1123 & -1124 & 1132 & -1133 & 1191 & -1192 mat=2 tmp=300.0
+CELL 1126 1123 & -1124 & 1133 & -1134 & 1191 & -1192 mat=8:27 tmp=300.0 vol=35.112
+CELL 1127 1123 & -1124 & 1134 & -1135 & 1191 & -1192 mat=2 tmp=300.0
+CELL 1128 1124 & -1125 & 1132 & -1135 & 1191 & -1192 mat=2 tmp=300.0
+CELL 1129 1125 & -1126 & 1131 & -1136 & 1191 & -1192 fill=19 tmp=300.0
+CELL 1130 1126 & -1127 & 1131 & -1132 & 1191 & -1192 mat=2 tmp=300.0
+CELL 1131 1126 & -1127 & 1132 & -1135 & 1191 & -1192 mat=3 tmp=300.0
+CELL 1132 1126 & -1127 & 1135 & -1136 & 1191 & -1192 mat=2 tmp=300.0
+CELL 1133 ( -1121 : 1127 : -1131 : 1136 )& 1191 & -1192 mat=3 tmp=300.0
+CELL 1134 -1191 mat=7 tmp=300.0
+CELL 1135 1192 mat=7 tmp=300.0
+
+UNIVERSE 19 LAT=1 SCOPE=1 19 1 PITCH=7.62 0.38 1.0 FILL=16 * 19
+
+UNIVERSE 16 move=3.81 0.114 0 
+CELL 1101 -1111 mat=2 tmp=300.0
+CELL 1102 1114 mat=2 tmp=300.0
+CELL 1103 1111 & -1114 & 1102 mat=2 tmp=300.0
+CELL 1104 -1102 & 1103 & 1111 & -1112 mat=2 tmp=300.0
+CELL 1105 -1102 & 1103 & 1112 & -1113 mat=1 tmp=300.0 vol=35.112
+CELL 1106 -1102 & 1103 & 1113 & -1114 mat=2 tmp=300.0
+CELL 1107 -1103 & 1104 & 1111 & -1114 mat=2 tmp=300.0
+CELL 1108 -1104 & 1111 & -1114 mat=3 tmp=300.0
+
+UNIVERSE 8 move=3.86 3.86 0 
+CELL 1811 1801 & -1802 & 1803 & -1804 & 1891 & -1892 mat=28:63 tmp=300.0 vol=4354.83
+CELL 1812 ( -1801 : 1802 : -1803 : 1804 )& 1891 & -1892 mat=3 tmp=300.0
+CELL 1813 -1891 mat=7 tmp=300.0
+CELL 1814 1892 mat=7 tmp=300.0
+
+SURFACE
+Surf 1801 py -3.81
+Surf 1802 py 3.81
+Surf 1803 px -3.81
+Surf 1804 px 3.81
+Surf 1891 pz 0
+Surf 1892 pz 75
+Surf 1001 px 0
+Surf 1002 px 54.04
+Surf 1003 py 0
+Surf 1004 py 61.76
+Surf 1011 px -10
+Surf 1012 px 60
+Surf 1013 py -5
+Surf 1014 py 75
+Surf 1091 pz 0
+Surf 1092 pz 75
+Surf 1101 py 0.266
+Surf 1102 py 0.228
+Surf 1103 py 0.152
+Surf 1104 py 0.114
+Surf 1105 py -0.114
+Surf 1110 px -3.81
+Surf 1111 px -3.33
+Surf 1112 px -3.08
+Surf 1113 px 3.08
+Surf 1114 px 3.33
+Surf 1115 px 3.81
+Surf 1121 py -0.276
+Surf 1122 py -0.152
+Surf 1123 py -0.114
+Surf 1124 py -0.038
+Surf 1125 py 0
+Surf 1126 py 7.22
+Surf 1127 py 7.344
+Surf 1131 px 0
+Surf 1132 px 0.48
+Surf 1133 px 0.73
+Surf 1134 px 6.89
+Surf 1135 px 7.14
+Surf 1136 px 7.62
+Surf 1191 pz 0
+Surf 1192 pz 75
+
+
+INCLUDE material_2
+
+CRITICALITY
+PowerIter keff0 = 1.477970 population = 100 10 20
+InitSrc POINT = 27.02000000000000 30.88000000000000 37.50000000000000
+
+
+BURNUP
+BurnCell 1126 1811
+TimeStep 90.0
+Power 5.0
+Acelib .30c
+Parallel 1
+Succession cumulativetime = 90.0 cumulativeburnup = 50.554072373102066 cellcmltvburnup = 1
+Depthlib DepthMainLib
+
+
+PRINT
+inpfile 1

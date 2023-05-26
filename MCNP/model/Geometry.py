@@ -14,11 +14,12 @@ class Cell(BaseModel):
         'LAT': [int],
         'TRCL': [int],
         'INNER': [bool],
-        'IMP:N': [float]
+        'IMP:N': [float],
+        'IMP:P': [float]
     }
 
     def __init__(self, number=-1, bounds='', material=None, density=None, fill=None, inner=False, u=0, lat=None,
-                 unparsed=None, impn=None):
+                 unparsed=None, impn=None, impp=None):
         self.number = number
         self.bounds = bounds
         self.fill = fill
@@ -29,6 +30,7 @@ class Cell(BaseModel):
         self.lat = lat
         self.unparsed = unparsed
         self.impn = impn
+        self.impp = impp
 
     def check(self):
         assert self.number >= 0
@@ -46,6 +48,8 @@ class Cell(BaseModel):
             self.lat = options['LAT']
         if 'IMP:N' in options.keys():
             self.impn = options['IMP:N']
+        if 'IMP:P' in options.keys():
+            self.impp = options['IMP:P']
 
     def __str__(self):
         s = '%d %d ' % (self.number, self.material)
@@ -166,10 +170,10 @@ class Surface(BaseModel):
 
     surf_type_para = {
         'P': ['list', float, 4],
-        'PX': [float],
-        'PY': [float],
-        'PZ': [float],
-        'SO': [float],
+        'PX': ['list', float, 1],
+        'PY': ['list', float, 1],
+        'PZ': ['list', float, 1],
+        'SO': ['list', float, 1],
         'S': ['list', float, 4],
         'SX': ['list', float, 2],
         'SY': ['list', float, 2],
@@ -177,15 +181,15 @@ class Surface(BaseModel):
         'C/X': ['list', float, 3],
         'C/Y': ['list', float, 3],
         'C/Z': ['list', float, 3],
-        'CX': [float],
-        'CY': [float],
-        'CZ': [float],
+        'CX': ['list', float, 1],
+        'CY': ['list', float, 1],
+        'CZ': ['list', float, 1],
         'K/X': ['list', float, 5],
         'K/Y': ['list', float, 5],
         'K/Z': ['list', float, 5],
-        'KX': ['list', float, 5],
-        'KY': ['list', float, 5],
-        'KZ': ['list', float, 5],
+        'KX': ['list', float, 3],
+        'KY': ['list', float, 3],
+        'KZ': ['list', float, 3],
         'SQ': ['list', float, 10],
         'GQ': ['list', float, 10],
         'TX': ['list', float, 6],

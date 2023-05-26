@@ -7,6 +7,7 @@ from yaml import Loader, Dumper
 
 from RMC.model.input.Geometry import *
 from RMC.model.input.refuelling import *
+from RMC.model.input.base import YMLModelObject as BaseModel
 
 
 class YMLParser:

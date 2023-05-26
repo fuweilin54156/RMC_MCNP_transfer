@@ -1,0 +1,23 @@
+Case 21-8,172.3 gPu/l,31.09L,Unrefl,No shell, 4.57% Pu-240 
+1  0           1            imp:n=0 $ Outside Everything
+2  1  9.90718-02  -1       imp:n=1 $ Pu(NO3)4 Solution
+
+1   so    19.5064           $ Sphere Inner Radius
+
+mode n
+kcode    2000 1.0  50  1550
+sdef pos 0.0 0.0 0.0 rad d1 
+sc1  Spherical Source about origin
+si1    19.50
+m1     94238.66c  2.6153e-08  
+       94239.66c  4.1249e-04    $ Solution
+       94240.66c  2.0181e-05  
+       94241.66c  1.2181e-06
+       94242.66c  3.8579e-08  
+        7014.66c  4.7228e-03
+        1001.66c  5.4160e-02  
+        8016.66c  3.9755e-02
+mt1    lwtr.01t                           $S(Alpha,Beta) 
+totnu 
+prdmp             
+print       40 50 60 -175 -178

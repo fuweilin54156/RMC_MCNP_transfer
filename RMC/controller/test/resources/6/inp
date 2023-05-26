@@ -1,0 +1,136 @@
+UNIVERSE 0
+cell  1     -6   fill = 1  
+cell  2     6   void = 1  
+
+UNIVERSE 1
+cell  31   ( 7 & -8 & 9 & -10 ):( 11 & -12 & 13 & -14 )  fill = 2  
+cell  41   (( -7 : 8 : -9 : 10 )&( -11 : 12 : -13 : 14 )) mat = 5  
+
+UNIVERSE 2  move = -6 -6 0   lat = 1  scope = 3 3 1   pitch = 4 4 1   fill = 
+     10 12 10
+     14 13 15
+     10 11 10
+
+UNIVERSE 10
+cell  111   -1 : 1  mat = 5  
+
+UNIVERSE 11  move = 2 2 0 
+cell  3     -15 : 16 : -17 : 18  mat = 5  
+cell  4     15 & -16 & 17 & -18   fill = 21  
+
+UNIVERSE 21  move = -1.89 -1.89 0   lat = 1  scope = 3 3 1   pitch = 1.26 1.26 1   fill = 
+     34 31 31
+     31 34 31
+     31 31 34
+
+UNIVERSE 12  move = 2 2 0 
+cell  5     -15 : 16 : -17 : 18  mat = 5  
+cell  6     15 & -16 & 17 & -18   fill = 22  
+
+UNIVERSE 22  move = -1.89 -1.89 0   lat = 1  scope = 3 3 1   pitch = 1.26 1.26 1   fill = 
+     34 32 32
+     32 34 32
+     32 32 34
+
+UNIVERSE 13  move = 2 2 0 
+cell  7     -15 : 16 : -17 : 18  mat = 5  
+cell  8     15 & -16 & 17 & -18   fill = 23  
+
+UNIVERSE 23  move = -1.89 -1.89 0   lat = 1  scope = 3 3 1   pitch = 1.26 1.26 1   fill = 
+     35 31 31
+     31 34 31
+     31 31 35
+
+UNIVERSE 14  move = 2 2 0 
+cell  9     -15 : 16 : -17 : 18  mat = 5  
+cell  10    15 & -16 & 17 & -18   fill = 24  
+
+UNIVERSE 24  move = -1.89 -1.89 0   lat = 1  scope = 3 3 1   pitch = 1.26 1.26 1   fill = 
+     35 32 32
+     32 34 32
+     32 32 35
+
+UNIVERSE 15  move = 2 2 0 
+cell  11    -15 : 16 : -17 : 18  mat = 5  
+cell  12    15 & -16 & 17 & -18   fill = 25  
+
+UNIVERSE 25  move = -1.89 -1.89 0   lat = 1  scope = 3 3 1   pitch = 1.26 1.26 1   fill = 
+     36 32 31
+     32 34 32
+     31 32 36
+
+UNIVERSE 31  move = 0.63 0.63 0 
+cell  43    -1  mat = -1    tmp = 300    inner = 1  
+cell  44    1 & -2  mat = 3    inner = 1  
+cell  45    2 & -3  mat = 4    inner = 1  
+cell  46    3  mat = 5  
+
+UNIVERSE 32  move = 0.63 0.63 0 
+cell  53    -1  mat = -2    tmp = 300    inner = 1  
+cell  54    1 & -2  mat = 3    inner = 1  
+cell  55    2 & -3  mat = 4    inner = 1  
+cell  56    3  mat = 5  
+
+UNIVERSE 34  move = 0.63 0.63 0 
+cell  47    -4  mat = 5    inner = 1  
+cell  48    4 & -5  mat = 4    inner = 1  
+cell  49    5  mat = 5  
+
+UNIVERSE 35  move = 0.63 0.63 0 
+cell  57    -4  mat = -3    inner = 1  
+cell  58    4 & -19  mat = 4    inner = 1  
+cell  59    19  mat = 5  
+
+UNIVERSE 36  move = 0.63 0.63 0 
+cell  67    -20  mat = -4    inner = 1  
+cell  68    20 & -4  mat = 5    inner = 1  
+cell  69    4 & -5  mat = 4    inner = 1  
+cell  70    5  mat = 5  
+
+SURFACE
+surf  1    CZ    0.4096 
+surf  2    CZ    0.4178 
+surf  3    CZ    0.475 
+surf  4    CZ    0.569 
+surf  5    CZ    0.6147 
+surf  6    CZ    7 
+surf  7    PX    -2 
+surf  8    PX    2 
+surf  9    PY    -6 
+surf  10   PY    6 
+surf  11   PY    -2 
+surf  12   PY    2 
+surf  13   PX    -6 
+surf  14   PX    6 
+surf  15   PX    -1.89 
+surf  16   PX    1.89 
+surf  17   PY    -1.89 
+surf  18   PY    1.89 
+surf  19   CZ    0.62 
+surf  20   CZ    0.4 
+
+INCLUDE material_1
+
+CRITICALITY
+PowerIter  keff0 = 0.144327   population = 1000 10 20
+InitSrc  POINT = 0.63 0.63 0 
+
+BURNUP
+BurnCell    43 53 57 67
+TimeStep    2 1 2 1
+Power       30 30 30 30
+Substep     10
+AceLib      .71c
+Strategy    type=0
+Solver      2
+outputcell  1 > 31 > 4 > 8 > 2 > 43
+
+PRINT
+CsTally    0
+InpFile    1
+
+
+REFUELLING
+REFUEL step = 3 index = 3
+FILE refuelling.yml
+

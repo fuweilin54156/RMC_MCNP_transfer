@@ -1,0 +1,56 @@
+PS1273BY, 34.3 gPu/l,1.076g/cc, 0.49N,65.96gNO3/l,Bare Sph.+.255"SS, 4.57% Pu240
+C   Changed total atoms/cc from 1.00745-01 to 1.0074515-01 as of 11/7/97.
+1  0                5                    imp:n=0 $ Outside Everything
+2  1  1.0074515-01 -1   -3               imp:n=1 $ Pu(NO3)4 Solution
+3  2  8.62396-02    1   -2  #6  #7       imp:n=1 $ SS347 Sphere
+4  0                2    4  -5  #6 #7 #8 imp:n=1 $ Void Upper Inner Hemisphere
+5  0                2   -4  -5  #9 #10   imp:n=1 $ Void Lower Inner Hemisphere
+6  1  1.0074515-01  1   -3   4  -7       imp:n=1 $ Liquid in Support Tube
+7  0                3    4  -5  -7       imp:n=1 $ Air in Support Tube
+8  2  8.62396-02    2    4  -5  -6   7   imp:n=1 $ SS347 Top Support Tube
+9  0                2   -4  -5  -9       imp:n=1 $ Air in Bottom Tube
+10  2  8.62396-02    2   -4  -5  -8   9   imp:n=1 $ SS347 Bottom Tube
+                                                      
+1   so    19.3163           $ Sphere Inner Radius
+2   so    20.0986           $ Sphere Outer Radius
+3   px    19.3163           $ Liquid Level
+4   px     0.0              $ Model Middle
+5   so    50.0986           $ Outer Surface
+6  c/x   0.0  3.811  2.8575 $ Top Support Tube OD
+7  c/x   0.0  3.811  2.6924 $ Top Support Tube ID
+8   cx     2.86             $ Bottom Tube OD
+9   cx     2.555            $ Bottom Tube ID
+
+mode n
+kcode    2000 1.0  50  1550
+sdef pos 0.0 0.0 0.0 rad d1 
+sc1  Spherical Source about origin
+si1    19.31
+m1     94238.66c  5.2063e-09  
+       94239.66c  8.2114e-05    $ Solution
+       94240.66c  4.0175e-06  
+       94241.66c  2.4250e-07
+       94242.66c  7.6800e-09  
+        7014.66c  6.4062e-04
+        1001.66c  6.5496e-02   
+        8016.66c  3.4522e-02
+m2  
+      26054.66c 3.44259E-03
+      26056.66c 5.44879E-02
+      26057.66c 1.24646E-03
+      26058.66c 1.78065E-04 $ SS304L
+      24050.66c 7.57966E-04
+      24052.66c 1.46000E-02
+      24053.66c 1.65533E-03
+      24054.66c 4.14703E-04
+      28058.66c 5.27065E-03
+      28060.66c 2.01500E-03
+      28061.66c 8.72394E-05
+      28062.66c 2.77159E-04
+      28064.66c 7.02547E-05
+      25055.66c 1.7363e-03
+C  sum   8.623960E-02      
+mt1    lwtr.01t                           $S(Alpha,Beta) 
+totnu 
+prdmp             
+print    40 50 60 -175 -178

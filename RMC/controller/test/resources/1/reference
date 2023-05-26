@@ -1,0 +1,62 @@
+UNIVERSE 0 
+CELL 1 6 & -7 & 8 & -9 fill=8
+CELL 2 -6 : 7 : -8 : 9 void=1
+
+UNIVERSE 8 LAT=1 SCOPE=2 2 1 PITCH=1.26 1.26 1.0 FILL=
+ 5 1
+ 9 1
+
+UNIVERSE 1 move=0.63 0.63 0 
+CELL 3 -1 mat=-1 inner=1 tmp=300.0
+CELL 4 1 & -2 mat=3 inner=1
+CELL 5 2 & -3 mat=4 inner=1
+CELL 6 3 mat=5
+
+UNIVERSE 5 move=0.63 0.63 0 
+CELL 7 -4 mat=5 inner=1
+CELL 8 4 & -5 mat=4 inner=1
+CELL 9 5 mat=5
+
+UNIVERSE 9 move=0.63 0.63 0 
+CELL 3 -1 mat=-1 inner=1 tmp=600.0
+CELL 4 1 & -2 mat=3 inner=1
+CELL 5 2 & -3 mat=4 inner=1
+CELL 6 3 mat=5
+
+SURFACE
+Surf 1 cz 0.4096
+Surf 2 cz 0.4178
+Surf 3 cz 0.475
+Surf 4 cz 0.569
+Surf 5 cz 0.6147
+Surf 6 px 0 bc = 1
+Surf 7 px 2.52 bc = 1
+Surf 8 py 0 bc = 1
+Surf 9 py 2.52 bc = 1
+
+
+REFUELLING
+FILE refuelling.yml
+REFUEL step= 1 3 index= 1 3
+
+INCLUDE material
+
+CRITICALITY
+PowerIter keff0 = 1.278212 population = 1000 10 20
+InitSrc POINT = 0.63 0.63 0
+
+
+BURNUP
+BurnCell 3
+TimeStep 5.0
+Power 30.0
+Substep 10
+Acelib .71c
+Strategy type = 0
+Solver 2
+OutputCell 1 > 1 > 3
+
+
+PRINT
+inpfile 1
+CsTally 0

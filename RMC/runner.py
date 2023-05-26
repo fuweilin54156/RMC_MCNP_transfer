@@ -23,8 +23,9 @@ from RMC.controller.rmc import RMCController
 from RMC.controller.rmc import FakeRMC
 from RMC.controller.ctf import FakeCTF
 from RMC.controller.ctf import FakeCTFPreproc
+from RMC.controller.platform import get_platform
 from RMC.util.CoupleUtils import power_ave
-import os
+from RMC.args import parse
 
 
 class Job(object):
@@ -63,7 +64,8 @@ class Job(object):
     def __init__(self, exec='RMC', inp=None, out=None, restart=None,
                  n_mpi=None, n_threads=None, cwd=None, print_screen=True,
                  status=None, conti=False, archive_dir=None, platform='linux',
-                 ctf_n_mpi=0, proc_per_node=None, **kwargs):
+                 ctf_n_mpi=0, proc_per_node=None, conti_inp="",
+                 **kwargs):
         # Initialize class attributes
         self.exec = os.path.abspath(exec)
         self.dir = os.path.dirname(os.path.abspath(inp))
@@ -76,6 +78,10 @@ class Job(object):
         self.print_screen = print_screen
         self.status = status
         self.conti = conti
+        # conti_inp should not be used currently, this parameter is only used to avoid panic for unknown parameters,
+        #   the processing of continuing is performed in the controller.
+        # TODO: optimize the logic to remove this parameter.
+        self.conti_inp = conti_inp
 
         self.archive_dir = archive_dir
         # 'linux', use mpiexec;
@@ -83,22 +89,8 @@ class Job(object):
         # ‘yinhe', use yhbatch & yhrun;
         # 'bscc', use sbatch & srun;
         # bscc 北京超级云计算中心 beijing super cloud computing center
-        self.platform = platform
+        self.platform = get_platform(name=platform)
         self.ctf_n_mpi = ctf_n_mpi  # 0: shutdown; n: mpi of ctf
-
-        # 使用超算时，需要设置单节点的CPU数量
-        # 先设置默认值
-        self.proc_per_node = 24
-        if platform == 'tianhe':
-            self.proc_per_node = 24
-        elif platform == 'bscc':
-            self.proc_per_node = 64
-        elif platform == 'yinhe':
-            self.proc_per_node = 20
-        # 如果用户指定了单节点CPU的数量，就用用户指定的
-        if proc_per_node is not None:
-            self.proc_per_node = proc_per_node
-
         self.cobratf = 'cobratf'
         self.cobratf_preproc = 'cobratf_preproc'
         self.rmc2ctf = 'rmc2ctf'
@@ -204,38 +196,8 @@ class Job(object):
         """Generate commands to be run from formatted string"""
         # todo: processing for arguments without parameters, like --continue.
         if commands is None:
-            commands = "{exec}"
-            if self.n_threads is not None:
-                commands += " -s {n_threads}"
-                if self.platform in ['tianhe', 'yinhe', 'bscc']:
-                    commands = "-c {n_threads} " + commands
-            if self.inp is not None:
-                commands += " {inp}"
-            if self.out is not None:
-                commands += " -o {out}"
-            if self.restart is not None:
-                commands += " -r {restart}"
-            if self.status is not None:
-                commands += " --status {status}"
-            if self.conti is not None and self.conti:
-                commands += " --continue"
-            if self.n_mpi is not None:
-                if self.platform == 'linux':
-                    commands = "mpiexec -n {n_mpi} " + commands
-                elif self.platform in ['tianhe', 'yinhe', 'bscc']:
-                    n_mpi_omp = self.n_mpi
-                    if self.n_threads is not None:
-                        n_mpi_omp *= self.n_threads
-                    nnodes = n_mpi_omp // self.proc_per_node
-                    if n_mpi_omp % self.proc_per_node > 0:
-                        nnodes += 1
-                        print('Warning: node utilization is insufficient. '
-                              '{} mpi/threads idle.'.format(nnodes * self.proc_per_node - n_mpi_omp))
-                    if self.platform in ['tianhe', 'yinhe']:
-                        commands = "yhrun -N " + str(nnodes) + \
-                                   " -n {n_mpi} " + commands
-                    elif self.platform in ['bscc']:
-                        commands = "srun -n {n_mpi} " + commands
+            commands = self.platform.run_command(mpi=self.n_mpi, openmp=self.n_threads, commands=self.exec, inp=self.inp,
+                                                 out=self.out, restart=self.restart, status=self.status, conti=self.conti, code="RMC")
         return commands.format(**self.properties())
 
     def _archive_info(self):
@@ -325,29 +287,10 @@ class Job(object):
         assert os.path.exists(rmc2ctf), 'interface executable rmc2ctf does NOT exists!'
         assert os.path.exists(ctf2rmc), 'interface executable ctf2rmc does NOT exists!'
 
-        if self.platform == 'linux':  # linux shell
-            args_preproc = preproc
-            args_ctf = "mpiexec -n {} {}".format(self.ctf_n_mpi, ctf)
-            args_rmc2ctf = rmc2ctf
-            args_ctf2rmc = ctf2rmc
-        elif self.platform in ['tianhe', 'yinhe']:  # yhrun systems
-            nnodes = self.ctf_n_mpi // self.proc_per_node
-            if self.ctf_n_mpi % self.proc_per_node > 0:
-                nnodes += 1
-            args_preproc = "yhrun -N 1 -n 1 {}".format(preproc)
-            args_ctf = "yhrun -N {} -n {} {}".format(nnodes, self.ctf_n_mpi, ctf)
-            args_rmc2ctf = "yhrun -N 1 -n 1 {}".format(rmc2ctf)
-            args_ctf2rmc = "yhrun -N 1 -n 1 {}".format(ctf2rmc)
-        elif self.platform in ['bscc']:  # srun systems
-            args_preproc = "srun -n 1 {}".format(preproc)
-            args_ctf = "srun -n {} {}".format(self.ctf_n_mpi, ctf)
-            args_rmc2ctf = "srun -n 1 {}".format(rmc2ctf)
-            args_ctf2rmc = "srun -n 1 {}".format(ctf2rmc)
-        else:
-            args_preproc = ""
-            args_ctf = ""
-            args_rmc2ctf = ""
-            args_ctf2rmc = ""
+        args_preproc = self.platform.run_command(mpi=1, commands=preproc)
+        args_ctf = self.platform.run_command(mpi=self.ctf_n_mpi, commands=ctf)
+        args_rmc2ctf = self.platform.run_command(mpi=1, commands=rmc2ctf)
+        args_ctf2rmc = self.platform.run_command(mpi=1, commands=ctf2rmc)
 
         self.execute(args_rmc2ctf)
         self.execute(args_preproc)
@@ -370,6 +313,7 @@ class Job(object):
 
         if self.ctf_n_mpi > 0:
             # 当前限定使用RMC的第一个计数器（必须是符合一定格式的网格计数器）输出的HDF5文件，作为耦合文件
+            # 未来有多种热工程序后，上面的if条件会进行调整
             power_ave('MeshTally1.h5')
             self.execute_ctf()
         self.execute_rmc(commands)
@@ -435,7 +379,8 @@ def run(commands=None, **kwargs):
     """
     kwargs['inp'] = os.path.abspath(kwargs['inp'])
 
-    controller = RMCController(kwargs['inp'], kwargs['archive_dir'])
+    controller = RMCController(kwargs['inp'], kwargs['archive_dir'],
+                               conti=kwargs['conti'], conti_inp=kwargs['conti_inp'])
     if 'status' not in kwargs:
         print('INFO: No status file specified, simulation terminated...')
         return
@@ -451,5 +396,8 @@ if __name__ == '__main__':
 
     archive = os.path.join(os.getcwd(), 'archive')
 
-    run(inp="workspace/inp", n_mpi=4, n_threads=None, exec="workspace/RMC",
-        status="workspace/status.txt", conti=False, archive_dir=archive, ctf_n_mpi=1, platform='linux')
+    args = parse()
+
+    run(inp=args.inp, n_mpi=args.mpi, n_threads=args.omp, exec="workspace/RMC",
+        status="workspace/status.txt", conti=args.conti, conti_inp=args.conti_inp, archive_dir=archive,
+        ctf_n_mpi=args.assem, platform=args.platform)

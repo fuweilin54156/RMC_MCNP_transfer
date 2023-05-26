@@ -27,3 +27,14 @@ class FakeCTFPreproc:
 
         with open(os.path.join(self.dir, 'deck.inp'), 'w') as deckinp:
             deckinp.write('fake ctf input file')
+
+
+class FakeCTF2RMC:
+    def __init__(self, inp):
+        self.dir = os.path.dirname(inp)
+
+    def run(self):
+        assert os.path.exists(os.path.join(self.dir, 'deck.ctf.h5'))
+
+        with open(os.path.join(self.dir, 'CTF.h5'), 'w') as deckinp:
+            deckinp.write('fake ctf data h5 file')

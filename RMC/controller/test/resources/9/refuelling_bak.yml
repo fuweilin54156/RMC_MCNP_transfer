@@ -1,0 +1,52 @@
+# -*- coding:utf-8 -*-
+# author: Kaiwen Li
+# date: 2018-4-28
+# title: Burnup calculation of PWR 3*3 mini-core, each assembly composed of 3*3 pins.
+---
+
+refuelling:
+  !refuelling
+  lists:
+    - !do_refuel
+      step: 1 # after which step will the refuelling performs.
+      plan:
+        - !refuel_univ
+          universe: 2 # in the future, this should be the name rather than the index of the universe.
+          position: [[1, 31]] # the sequence to include the universe to be refuelled, 1 > 8.
+          pattern: univ_2
+          mapping:
+            - [     0, B002,    0]
+            - [NEW_12, C002, B001]
+            - [     0, A002,    0]
+    - !do_refuel
+      step: 3
+      plan:
+        - !refuel_univ
+          universe: 2 # in the future, this should be the name rather than the index of the universe.
+          position: [[1, 31]] # the sequence to include the universe to be refuelled, 1 > 8.
+          pattern: univ_2
+          mapping:
+            - [   0,   B003-1,    0]
+            - [B002, NEW_11, NEW_15]
+            - [   0,   C002,      0]
+  utilities:
+    universes:
+      univ_2:
+        assemblies: [[13, 23], [14, 24], [16, 26]]
+        alias:
+          column: [A, B, C]
+          row: [1, 2, 3]
+          new: "NEW_" # prefix to mark the new assemblies,
+                      # the number of the new assembly universe is appended to the rear of it.
+        fixed:
+          pattern1:
+            assemblies: [A002, B002]
+            default_pin: 34
+            position:
+            - [1, 1]
+            - [3, 3]
+          pattern2:
+            assemblies: [B002, B003]
+            default_pin: 34
+            position:
+            - [2, 2]

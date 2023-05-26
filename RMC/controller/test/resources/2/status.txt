@@ -1,0 +1,7 @@
+RMC:
+- cycle:
+  - burnup:
+      step: 1
+      output: inp.FMTinp.step1
+      status: done
+  - output: inp.FMTinp.step1

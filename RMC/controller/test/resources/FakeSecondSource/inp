@@ -1,0 +1,467 @@
+// JRR-3M RMC INP //
+Universe  0
+cell  1001  -1011&1093&-1094  fill=96
+cell  1002  1011&-1012&1093&-1094  mat=2  // Al //
+cell  1003  1012&-1013&1093&-1094  mat=8  // D2O //
+cell  1004  1013&-1014&1093&-1094  mat=2  // Al //
+cell  1005  1014&-1015&1093&-1094  mat=3  // H2O //
+cell  1006  (1015:-1093:1094)  void=1     // Outside //
+
+Universe  96
+cell  1011  1001&-1002&1003&-1004&1091&-1092  fill=99
+cell  1012  (-1001:1002:-1003:1004)&1091&-1092  mat=3
+cell  1013 -1091 mat=7
+cell  1014 1092  mat=7
+
+Universe  99 lat=1 pitch=7.72 7.72 1 scope=9 9 1 fill=
+         8 8 8 8 8 8 8 8 8
+         8 8 8 1 2 1 8 8 8
+         8 8 1 4 1 5 1 8 8
+         8 2 1 1 1 1 1 1 8
+         8 1 6 1 2 1 6 1 8
+         8 1 1 1 1 1 1 2 8
+         8 8 1 5 1 4 1 8 8
+         8 8 8 1 2 1 8 8 8
+         8 8 8 8 8 8 8 8 8
+
+// standard fuel assembly
+Universe 1  move=3.86 0.05 0
+cell 1120  1105&-1106&1113&-1112&1191&-1192 mat=3
+cell 1121  1105&-1106&1111&-1113&1191&-1192 tmp=600 fill=19
+cell 1122  1109&-1105&1111&-1112&1191&-1192 mat=2 tmp=600 vol=274.32
+cell 1123  1106&-1110&1111&-1112&1191&-1192 mat=2 tmp=600 vol=274.32
+cell 1124  (-1109:1110:-1111:1112)&1191&-1192 mat=3
+cell 1125  -1191 mat=3
+cell 1126  1192  mat=3
+
+Universe  19 lat=1 pitch=6.66 0.38 1 scope=1 20 1 fill=                 // The filled lattice zone //
+   16*20
+
+Universe 16 move=0 0.2 0
+cell 1101 1101&-1102&1103&-1104&1191&-1192 mat=1 tmp=600 vol=35.112
+cell 1102 (-1101:1102:-1103:1104)&1105&-1106&1107&-1108&1191&-1192 mat=2 tmp=600 vol=40.812
+cell 1103 (-1105:1106:-1107:1108)&1191&-1192 mat=3
+cell 1104 -1191 mat=3
+cell 1105 1192  mat=3
+
+// Irradiation hole element //
+Universe  2  move=3.86 3.86 0
+cell  1211  -1211&1291&-1292  mat=2 tmp=600 vol=1900.663555 
+cell  1212  -1212&1211&1291&-1292  mat=3
+cell  1213  1212&1201&-1202&1203&-1204&1291&-1292  mat=2 tmp=600 vol=2383.205289
+// outside //
+cell  1214  (-1201:1202:-1203:1204)&1291&-1292  mat=3
+cell  1215  -1291  mat=7
+cell  1216  1292   mat=7
+
+// Follower fuel element for sa control rod//
+Universe  3 move=0 -3.18 0
+cell  1310  1305&-1306&1313&-1312&1191&-1192 mat=3
+cell  1311  1305&-1306&1311&-1313&1191&-1192 fill=36
+cell  1312  1309&-1305&1311&-1312&1191&-1192 mat=2 tmp=600 vol=228.96
+cell  1313  1306&-1310&1311&-1312&1191&-1192 mat=2 tmp=600 vol=228.96
+cell  1314  (-1309:1310:-1311:1312)&1191&-1192 mat=3
+cell  1315  -1191 mat=3
+cell  1316  1192  mat=3
+
+Universe  36  lat=1 pitch=5.4 0.39 1 scope=1 16 1 fill=
+   39*16
+
+Universe  39 move=0 0.255 0
+cell  1301  1301&-1302&1303&-1304&1191&-1192 mat=1 tmp=600 vol=27.93
+cell  1302  (-1301:1302:-1303:1304)&1305&-1306&1307&-1308&1191&-1192 mat=2 tmp=600 vol=33.63
+cell  1303  (-1305:1306:-1307:1308)&1191&-1192 mat=3
+cell  1304  -1191 mat=3
+cell  1305  1192  mat=3
+
+// Follower fuel element for R control rod//
+Universe  9 move=0 -3.18 0
+cell  1910  1305&-1306&1313&-1312&1191&-1192 mat=3
+cell  1911  1305&-1306&1311&-1313&1191&-1192 fill=36
+cell  1912  1309&-1305&1311&-1312&1191&-1192 mat=2 tmp=600 vol=228.96
+cell  1913  1306&-1310&1311&-1312&1191&-1192 mat=2 tmp=600 vol=228.96
+cell  1914  (-1309:1310:-1311:1312)&1191&-1192 mat=3
+cell  1915  -1191 mat=3
+cell  1916  1192  mat=3
+
+Universe  37  lat=1 pitch=5.4 0.39 1 scope=1 16 1 fill=
+   38*16
+
+Universe  38 move=0 0.255 0
+cell  1901  1301&-1302&1303&-1304&1191&-1192 mat=1 tmp=600 vol=27.93
+cell  1902  (-1301:1302:-1303:1304)&1305&-1306&1307&-1308&1191&-1192 mat=2 tmp=600 vol=33.63
+cell  1903  (-1305:1306:-1307:1308)&1191&-1192 mat=3
+cell  1904  -1191 mat=3
+cell  1905  1192  mat=3
+
+// R mobile control rod //
+Universe  4 move=3.86 3.86 0
+cell  1421  1422&-1423&1432&-1433&1691&-1692  fill=49
+cell  1422  (-1422:1423:-1432:1433)&1421&-1424&1431&-1434&1691&-1692  mat=2 tmp=600 vol=1139.2
+cell  1423  (-1421:1424:-1431:1434)&1691&-1692  mat=3
+cell  1424  -1691 mat=7
+cell  1425   1692 mat=7
+
+Universe  49
+// Follower fuel zone //
+cell  1411  1401&-1404&1411&-1414&1491&-1492  fill=9
+// Connection body //
+cell  1412  1401&-1404&1411&-1414&1492&-1493  mat=5
+// Hf Absorber //
+cell  1413  1402&-1403&1412&-1413&1493&-1494  mat=3
+cell  1414  (-1402:1403:-1412:1413)&1401&-1404&1411&-1414&1493&-1494  mat=4
+// H2O pz:95~105//
+cell  1415  1401&-1404&1411&-1414&1494&-1495  mat=3
+// outside zone //
+cell  1416  (-1401:1404:-1411:1414)&1491&-1495  mat=3
+cell  1417  -1491  mat=3
+cell  1418  1495   mat=3
+
+// Sa control rod //
+Universe  5  move=3.86 3.86 0
+cell  1501  1502&-1503&1512&-1513&1691&-1692  fill=59
+cell  1502  (-1502:1503:-1512:1513)&1501&-1504&1511&-1514&1691&-1692  mat=2 tmp=600 vol=1139.2
+cell  1503  (-1501:1504:-1511:1514)&1691&-1692  mat=3
+cell  1504  -1691 mat=7
+cell  1505  1692  mat=7
+
+Universe  59
+// H2O down//
+cell  1511  1521&-1524&1531&-1534&1591&-1592  mat=3
+// Follower fuel //
+cell  1512  1521&-1524&1531&-1534&1592&-1593  fill=3
+// Connectin body //
+cell  1513  1521&-1524&1531&-1534&1593&-1594  mat=5
+// Hf Absorber //
+cell  1514  1522&-1523&1532&-1533&1594&-1595  mat=3
+cell  1515  (-1522:1523:-1532:1533)&1521&-1524&1531&-1534&1594&-1595  mat=4
+// outside zone //
+cell  1516  (-1521:1524:-1531:1534)&1591&-1595  mat=3
+cell  1517  -1591  mat=3
+cell  1518  1595   mat=3
+
+// Fixed control rod //
+Universe  6  move=3.86 3.86 0
+cell  1611  1604&-1605&1614&-1615&1691&-1692  mat=3
+cell  1612  (-1604:1605:-1614:1615)&1603&-1606&1613&-1616&1691&-1692  mat=4
+cell  1613  (-1603:1606:-1613:1616)&1602&-1607&1612&-1617&1691&-1692  mat=3
+cell  1614  (-1602:1607:-1612:1617)&1601&-1608&1611&-1618&1691&-1692  mat=2 tmp=600 vol=1139.2
+cell  1615  (-1601:1608:-1611:1618)&1691&-1692  mat=3
+cell  1616  -1691  mat=3
+cell  1617  1692   mat=3
+
+// Al element //
+Universe  7  move=3.86 3.86 0
+cell  1711  1701&-1702&1703&-1704&1791&-1792  mat=2
+// outside //
+cell  1712  (-1701:1702:-1703:1704)&1791&-1792  mat=3
+cell  1713  -1791  mat=7
+cell  1714  1792   mat=7
+
+// Be element //
+Universe  8  move=3.86 3.86 0
+cell  1811  1801&-1802&1803&-1804&1891&-1892  mat=6
+// outside //
+cell  1812  (-1801:1802:-1803:1804)&1891&-1892  mat=3
+cell  1813  -1891  mat=7
+cell  1814  1892   mat=7
+
+Surface
+// Sa control rod //
+surf  1501  py  -3.81
+surf  1502  py  -3.31
+surf  1503  py  3.31
+surf  1504  py  3.81
+//
+surf  1511  px  -3.81
+surf  1512  px  -3.31
+surf  1513  px  3.31
+surf  1514  px  3.81
+//
+surf  1521  py  -3.18
+surf  1522  py  -2.68
+surf  1523  py  2.68
+surf  1524  py  3.18
+//
+surf  1531  px  -3.18
+surf  1532  px  -2.68
+surf  1533  px  2.68
+surf  1534  px  3.18
+//
+surf  1591  pz  -82.5
+surf  1592  pz  -82.5
+surf  1593  pz  -7.5
+surf  1594  pz  -2.5
+surf  1595  pz  77.5
+//
+//***********************************
+// R mobile control rod //
+surf  1401  py  -3.18
+surf  1402  py  -2.68
+surf  1403  py  2.68
+surf  1404  py  3.18
+//
+surf  1411  px  -3.18
+surf  1412  px  -2.68
+surf  1413  px  2.68
+surf  1414  px  3.18
+//
+surf  1421  py  -3.81
+surf  1422  py  -3.31
+surf  1423  py  3.31
+surf  1424  py  3.81
+//
+surf  1431  px  -3.81
+surf  1432  px  -3.31
+surf  1433  px  3.31
+surf  1434  px  3.81
+//
+surf  1491  pz  0//-82.5
+surf  1492  pz  75//-7.5
+surf  1493  pz  80//-2.5
+surf  1494  pz  160//77.5
+surf  1495  pz  190//105.001
+// Follower fuel surfaces
+surf  1301  px  -2.45
+surf  1302  px  2.45
+surf  1303  py  -0.038
+surf  1304  py  0.038
+surf  1305  px  -2.7
+surf  1306  px  2.7
+surf  1307  py  -0.076
+surf  1308  py  0.076
+surf  1309  px  -3.18
+surf  1310  px  3.18
+surf  1311  py  0
+surf  1312  py  6.36
+surf  1313  py  6.08
+// Fixed control rod //
+surf  1601  py  -3.81
+surf  1602  py  -3.31
+surf  1603  py  -3.18
+surf  1604  py  -2.68
+surf  1605  py  2.68
+surf  1606  py  3.18
+surf  1607  py  3.31
+surf  1608  py  3.81
+//
+surf  1611  px  -3.81
+surf  1612  px  -3.31
+surf  1613  px  -3.18
+surf  1614  px  -2.68
+surf  1615  px  2.68
+surf  1616  px  3.18
+surf  1617  px  3.31
+surf  1618  px  3.81
+//
+surf  1691  pz  -2.5
+surf  1692  pz  77.5
+// Absorber element surfaces //
+surf  1901  py  -3.81
+surf  1902  py  3.81
+surf  1903  px  -3.81
+surf  1904  px  3.81
+//
+surf  1911  cz  2.45
+surf  1912  cz  2.65
+//
+surf  1991  pz  -2.5
+surf  1992  pz  77.5
+surf  1993  pz  15
+surf  1994  pz  60
+// Be element //
+surf  1801  py  -3.81
+surf  1802  py  3.81
+surf  1803  px  -3.81
+surf  1804  px  3.81
+//
+surf  1891  pz  -2.5
+surf  1892  pz  77.5
+// Al element surfaces //
+surf  1701  py  -3.81
+surf  1702  py  3.81
+surf  1703  px  -3.81
+surf  1704  px  3.81
+//
+surf  1791  pz  -2.5
+surf  1792  pz  77.5
+// Irradiation hole surfaces //
+surf  1201  py  -3.81
+surf  1202  py  3.81
+surf  1203  px  -3.81
+surf  1204  px  3.81
+//
+surf  1211  cz  2.75
+surf  1212  cz  3.0
+//
+surf  1291  pz  -2.5
+surf  1292  pz  77.5
+// the core //
+surf  1001  py  0
+surf  1002  py  69.48
+surf  1003  px  0
+surf  1004  px  69.48
+//
+surf  1011  c/z  34.74 34.74 30
+surf  1012  c/z  34.74 34.74 31
+surf  1013  c/z  34.74 34.74 98
+surf  1014  c/z  34.74 34.74 100
+surf  1015  c/z  34.74 34.74 130
+//
+surf  1091  pz  -2.5
+surf  1092  pz  77.5
+surf  1093  pz  -30
+surf  1094  pz  105
+//Standard fuel surfaces //
+surf  1101  px  -3.08
+surf  1102  px  3.08
+surf  1103  py  -0.038
+surf  1104  py  0.038
+surf  1105  px  -3.33
+surf  1106  px  3.33
+surf  1107  py  -0.076
+surf  1108  py  0.076
+surf  1109  px  -3.81
+surf  1110  px  3.81
+surf  1111  py  0
+surf  1112  py  7.62
+surf  1113  py 7.6
+surf  1191  pz  0
+surf  1192  pz  75
+
+Material
+//
+mat  1  0.05407950
+        92235.60c   0.001518041   // $ U3-Si2(Al) //
+        92238.60c   0.006090328 
+        13027.60c   0.04139888 
+        14028.60c   4.6781E-03 //0.006998845
+        14029.60c   2.3687E-04 //0.000354381
+        14030.60c   1.5724E-04  //0.000235243 
+        54135.60c   1.695E-08
+//        SUM   0.05407950                                                       
+//
+//
+mat  2  0.06003848 
+        13027.60c    0.06003848  // $ Al //
+//        SUM    0.06003848                                                      
+//
+//         
+mat  3  0.1001483
+        1001.60c      0.6666667  // $ H2O //
+        8016.60c      0.3333333 
+//        SUM   0.1001483                                                        
+sab  3   HinH2O.94t                         
+//
+//
+mat  4   0.044873 
+        72174.60c   1.6200e-03
+        72176.60c   5.2060e-02
+        72177.60c   1.8606e-01
+        72178.60c   2.7297e-01
+        72179.60c   1.3629e-01
+        72180.60c   3.5100e-01   // Hf //
+//        SUM   0.044873
+//
+//
+mat  5   0.0874734
+         1001.60c 0.0464744  // connection body //
+         8016.60c 0.0232372
+         13027.60c 0.0177618
+//        SUM   0.0874734
+sab  5   HinH2O.94t
+//
+//
+mat  6   0.12360000
+         4009.60c 0.1236      // Be //
+sab  6   be-met.83t
+//        SUM   0.1236
+//
+//
+mat  7   0.09361 
+         1001.60c 0.0568    // H2O-Al //
+         8016.60c 0.0284
+         13027.60c 0.00841
+//       SUM   0.09361
+sab  7   HinH2O.94t
+//
+//
+mat  8   0.099001
+         1002.60c 0.0662      // D2O //
+         8016.60c 0.0331
+sab  8   D-D2O.94t
+//       SUM  0.099001
+//
+//
+mat  15  0.086240988
+         3007.60c  0.004312049    // LiD\A3\AC\A6\D1=0.58\A3\ACLi-6 90% //
+         3006.60c  0.038808444  
+         1002.60c  0.043120494
+//       SUM  0.086240988 
+//
+mat  13  0.081780247 
+         3007.60c  0.004089012     // LiH/D\A3\AC\A6\D1=0.55\A3\ACLi-6 90% //
+         3006.60c  0.036801111
+         1002.60c  0.040890123
+//        SUM  0.081780247
+//
+//
+mat  11  0.081780247
+         3007.60c  0.004312049    // LiH/D\A3\AC\A6\D1=0.55\A3\ACLi-6   90% //
+         3006.60c  0.038808444  
+         1002.60c  0.043120494
+MTLib plib=71p pnlib=71u         
+//       SUM  0.081780247
+//
+//**************************************
+//**************************************
+//
+//
+
+//
+//
+Criticality
+PowerIter  keff0=1.0 population=100000 100 500
+InitSrc    point=34.74 34.93 37.5
+//
+//
+
+// Convergence
+// SeMesh scope= 27 27 1 bound=-69.48 138.96 -69.48 138.96 -30 105
+
+Burnup
+Burncell 1101 1901
+ActivationCell 1122 1123 1102 1211 1213 1912 1913 1902 1422 1502 1614
+Power 20*7 0*2
+TimeStep 0.3 0.7 2 4 7*3 3.5 3.5
+Acelib .60c
+DecaySource type=1 cell= 1101 1901 1122 1123 1102 1211 1213 1912 1913 1902 1422 1502 1614 energy=0 2.53e-8 1e-7 1e-6 1e-5 1e-4 1e-3 1e-2 1e-1 1 2 3 4 5 6 7 8 9 10 20 40 60 80 100
+ secondSourceStartStep=9
+
+
+FixedSource
+Particle population=1000000000 fission=0 0
+
+Physics
+particleMode N P
+photon photonnucleus=1
+
+//
+//
+Tally
+CellTally 1 Type=1 Filter=1 1 1
+    cell=1001>1011>1:81
+CellTally 2 Type=1 particle=2 Filter=1 1 1
+    cell=1001>1011>1:81
+Meshtally 1 type=1 bound=-69.48 138.96 -69.48 138.96 0 0 scope=27 27 -1
+Meshtally 2 type=1 particle=2 bound=-69.48 138.96 -69.48 138.96 0 0 scope=27 27 -1
+
+
+Print
+inpfile 1
+//plot continue-calculation=1
+//plotid 1 type=slice color=cell pixels=10000 10000 vertexes=-100 170 0 170 -100 0
+//plotid 2 type=slice color=cell pixels=10000 10000 vertexes=-100 34.74 -85 170 34.74 110
+//plotid 3 type=slice color=cell pixels=10000 10000 vertexes=34.74 -100 -85 34.74 170 110
+//plotid 4 type=slice color=mat pixels=10000 10000 vertexes=-100 170 0 170 -100 0
+

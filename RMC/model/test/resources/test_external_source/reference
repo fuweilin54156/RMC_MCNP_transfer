@@ -1,0 +1,42 @@
+UNIVERSE 0 
+CELL 1 -1 : 2 : -3 : 4 mat=0
+CELL 2 1 & -2 & 3 & -4 fill=1
+
+UNIVERSE 1 LAT=1 SCOPE=3 3 1 PITCH=10.0 10.0 0.0 FILL=2 * 9
+
+UNIVERSE 2 move=5 5 0 
+CELL 3 -5 : 6 : -7 : 8 mat=0
+CELL 4 5 & -6 & 7 & -8 mat=1 vol=1.0
+
+SURFACE
+Surf 1 px 0
+Surf 2 px 30
+Surf 3 py 0
+Surf 4 py 30
+Surf 5 px -5
+Surf 6 px 5
+Surf 7 py -5
+Surf 8 py 5
+Surf 10 px 10
+
+
+MATERIAL
+Mat 1 -2.52 5010.60c 4 5011.60c 16 6000.60c 5
+
+
+EXTERNALSOURCE
+Source 1 Fraction = 0.5 Position = d1 Radius = d2 Axis = 0.0 0.0 1.0 Height = d3 Energy = 4.0 Cell = d4
+Source 5 Fraction = 1 Particle = 2 Energy = d5 Cell = 1 > 1 > 3
+Source 6 Fraction = 1 Particle = 2 Energy = d6 Cell = 1 > 2 > 3
+Source 7 Fraction = 1 Particle = 2 Energy = d7 Cell = 1 > 4 > 3
+Distribution 1 type = 2 value = 5 5 0 5 15 0 5 25 0 15 5 0 15 15 0 15 25 0 25 5 0 25 15 0 25 25 0 probability = 1 1 1 1 1 1 1 1 1
+Distribution 2 type = -1 value = 0 3 probability = 1
+Distribution 3 type = 4 value = -5 5 probability = 1
+Distribution 4 type = 3 value = 2 > 1 > 4 2 > 4 > 4 2 > 7 > 4 2 > 2 > 4 2 > 5 > 4 2 > 8 > 4 2 > 3 > 4 2 > 6 > 4 2 > 9 > 4 probability = 1 1 1 1 1 1 1 1 1
+Distribution 5 type = 2 value = 0 0.02 0.04 0.06 0.08 0.1 0.2 0.4 0.6 0.8 1 1.5 2 2.5 3 3.5 4 4.5 5 5.5 6 6.25 6.5 6.75 7 7.5 8 8.5 probability = 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 5.3358362624e+13
+Distribution 6 type = 2 value = 0 0.02 0.04 0.06 0.08 0.1 0.2 0.4 0.6 0.8 1 1.5 2 2.5 3 3.5 4 4.5 5 5.5 6 6.25 6.5 6.75 7 7.5 8 8.5 probability = 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 5.04293165629e+13
+Distribution 7 type = 2 value = 0 0.02 0.04 0.06 0.08 0.1 0.2 0.4 0.6 0.8 1 1.5 2 2.5 3 3.5 4 4.5 5 5.5 6 6.25 6.5 6.75 7 7.5 8 8.5 probability = 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 5.36877664829e+13
+
+
+FIXEDSOURCE
+Particle population = 10000000
