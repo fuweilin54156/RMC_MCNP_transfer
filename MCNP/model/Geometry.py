@@ -9,7 +9,7 @@ import numpy as np
 class Transformation(BaseModel):
     yaml_tag = u'!transformation'
 
-    def __init__(self, move=None, rotate=None):
+    def __init__(self, paras=None, move=None, rotate=None, num=None, angle=None):
         if move is not None:
             self.move = np.array(move)
         else:
@@ -18,21 +18,12 @@ class Transformation(BaseModel):
             self.rotate = np.array(rotate)
         else:
             self.rotate = None
+        self.num = num
+        self.paras = paras
+        self.angle = angle
 
     def check(self):
         assert self.move.shape == tuple([3]) and self.rotate.shape == tuple([3, 3])
-
-    def __str__(self):
-        s = ''
-        if self.move is not None:
-            s += 'move='
-            for idx, val in enumerate(self.move):
-                s += f'{val:.12g} '
-        if self.rotate is not None:
-            s += 'rotate='
-            for idx, val in enumerate(self.rotate):
-                s += '{:.12g} '.format(val)
-        return s.strip()
 
     def __copy__(self):
         move = None
@@ -43,13 +34,37 @@ class Transformation(BaseModel):
             rotate = np.copy(self.rotate)
         return Transformation(move=move, rotate=rotate)
 
+    def process(self):
+        if len(self.paras) == 1:
+            self.num = self.paras[0]
+        elif len(self.paras) == 3:
+            self.move = np.array(self.paras[0:3])
+        elif len(self.paras) == 12:
+            self.move = np.array(self.paras[0:3])
+            if self.angle is not None:
+                self.rotate = np.cos(np.array(self.paras[3:12])*np.pi/180)
+            else:
+                self.rotate = np.array(self.paras[3:12])
+        elif len(self.paras) == 13:
+            self.move = np.array(self.paras[0:3])
+            if self.angle is not None:
+                self.rotate = np.cos(np.array(self.paras[3:12])*np.pi/180)
+            else:
+                self.rotate = np.array(self.paras[3:12])
+            if self.paras[12] == -1:
+                self.move = -self.move
+        else:
+            return False
+
+
 class Cell(BaseModel):
     yaml_tag = u'!cell'
     card_option_types = {
         'FILL': [int],
         'U': [int],
         'LAT': [int],
-        'TRCL': [int],
+        'TRCL': ['list', float, -1],
+        r'\*TRCL': ['list', float, -1],
         'INNER': [bool],
         'IMP:N': [float],
         'IMP:P': [float],
@@ -57,7 +72,7 @@ class Cell(BaseModel):
     }
 
     def __init__(self, number=-1, bounds='', material=None, density=None, fill=None, inner=False, u=0, lat=None,
-                 unparsed=None, impn=None, impp=None, impe=None):
+                 unparsed=None, impn=None, impp=None, impe=None, trcl=None):
         self.number = number
         self.bounds = bounds
         self.fill = fill
@@ -70,13 +85,10 @@ class Cell(BaseModel):
         self.impn = impn
         self.impp = impp
         self.impe = impe
+        self.trcl = trcl
 
     def check(self):
         assert self.number >= 0
-
-    def add_bounds(self, bounds):
-        self.bounds = bounds
-        pass
 
     def add_options(self, options):
         if 'FILL' in options.keys():
@@ -91,6 +103,10 @@ class Cell(BaseModel):
             self.impp = options['IMP:P']
         if 'IMP:E' in options.keys():
             self.impe = options['IMP:E']
+        if 'TRCL' in options.keys():
+            self.trcl = Transformation(paras=options['TRCL'])
+        if r'\*TRCL' in options.keys():
+            self.trcl = Transformation(paras=options[r'\*TRCL'], angle=1)
 
     def __str__(self):
         s = '%d %d ' % (self.number, self.material)
@@ -241,12 +257,13 @@ class Surface(BaseModel):
         'PAIR': [int]
     }
 
-    def __init__(self, number=None, stype=None, parameters=None, boundary=None, pair=None, unparsed=None):
+    def __init__(self, number=None, stype=None, parameters=None, boundary=None, pair=None, tr=None, unparsed=None):
         self.number = number
         self.type = stype
         self.parameters = parameters
         self.boundary = boundary
         self.pair = pair
+        self.tr = tr
         self.unparsed = unparsed
 
     def check(self):

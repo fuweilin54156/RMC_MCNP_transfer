@@ -59,6 +59,25 @@ class PlainParser:
                 imp_e_list = imp_dict['IMP:E']
                 for i in range(len(geometry_model.cells)):
                     geometry_model.cells[i].impn = imp_e_list[i]
+
+            # process TR card
+            tr_card = other_cards[2]
+            tr_model = self.__parse_tr(tr_card)
+            for cell in geometry_model.cells:
+                if cell.trcl is not None:
+                    if cell.trcl.num is not None:
+                        for i in range(len(tr_model)):
+                            if tr_model[i].num == cell.trcl.num:
+                                cell.trcl.move = tr_model[i].move
+                                cell.trcl.rotate = tr_model[i].rotate
+            for surface in surface_model.surfaces:
+                if surface.tr is not None:
+                    if surface.tr.num is not None:
+                        for i in range(len(tr_model)):
+                            if tr_model[i].num == surface.tr.num:
+                                surface.tr.move = tr_model[i].move
+                                surface.tr.rotate = tr_model[i].rotate
+
             self.parsed_model.model['unparsed'] = other_cards[2]
 
         self.parsed_model.model['surface'] = surface_model
@@ -92,6 +111,7 @@ class PlainParser:
         lines = other_card.split('\n')
         mat_lines = []
         imp_lines = []
+        trcl_lines = []
         un_parsed = []
         for line in lines:
             words = line.split(' ')
@@ -101,9 +121,11 @@ class PlainParser:
                 mat_lines.append(line)
             elif re.match(r'IMP', words[0], re.I):
                 imp_lines.append(line)
+            elif re.match(r'tr', words[0], re.I) or re.match(r'\*tr', words[0], re.I):
+                trcl_lines.append(line)
             else:
                 un_parsed.append(line)
-        return [mat_lines, imp_lines, un_parsed]
+        return [mat_lines, imp_lines, trcl_lines, un_parsed]
 
     @staticmethod
     def __parse_material(content):
@@ -143,9 +165,10 @@ class PlainParser:
                 surf_boundary = 1  # reflective boundary
                 option = option[1:]
             surf_match = re.match(r'([0-9]+) ', option)
-            words = option.split()
             if surf_match:
+                words = option.split()
                 surf_pair = None
+                surf_tr = None  # transformation id for the surf
                 surf_id = int(words[0])
                 if re.match(r'[0-9\+\-]+', words[1]):
                     var = int(words[1])
@@ -153,8 +176,7 @@ class PlainParser:
                         surf_boundary = 3  # 周期边界条件
                         surf_pair = abs(var)
                     if var > 0:
-                        surf_unparsed += 'Warning: No processed transformation id ' + str(var) + ' for Surface ' + str(
-                            surf_id) + ' '
+                        surf_tr = abs(var)
                     surf_type = words[2].upper()
                     other_vars = ' '.join(words[2:])
                 else:
@@ -165,7 +187,7 @@ class PlainParser:
                     if unpar is not '':
                         surf_unparsed += 'Warning: No parsed card: ' + str(unpar) + ' '
                     surface = Surface(number=surf_id, stype=surf_type, parameters=surf[surf_type],
-                                      boundary=surf_boundary, pair=surf_pair, unparsed=surf_unparsed)
+                                      boundary=surf_boundary, pair=surf_pair, tr=Transformation(num=surf_tr), unparsed=surf_unparsed)
                     surfaces.append(surface)
                 else:
                     unparsed += option + '\n'
@@ -173,6 +195,28 @@ class PlainParser:
                 unparsed += option + '\n'
 
         return Surfaces(surfaces=surfaces, unparsed=unparsed)
+
+    @staticmethod
+    def __parse_tr(content):
+        trs = []
+        unparsed = ''
+        for option in content:
+            tr_angle = None
+            angle_match = re.match(r'\*', option)
+            if angle_match:
+                tr_angle = 1  # trn card defined by angles
+                option = option[1:]
+            tr_match = re.match(r'tr', option, re.I)
+            if tr_match:
+                words = option.split()
+                num = int(words[0][2:])
+                [tr_paras, index] = PlainParser._parse_list(words, float)
+                tr = Transformation(paras=tr_paras, num=num, angle=tr_angle)
+                tr.process()
+                trs.append(tr)
+            else:
+                unparsed += option + '\n'
+        return trs
 
     @staticmethod
     def __parse_geometry(content):
@@ -222,9 +266,10 @@ class PlainParser:
                 # 解析几何中的其他选项
                 cell_dict = {}
                 cell_card_options = copy.deepcopy(Cell.card_option_types)
-                cell_card_options.pop('TRCL')
                 if index != cell_len:
                     unparsed_items = ' '.join(cell.split()[index:])
+                    unparsed_items = unparsed_items.replace('*trcl', "trcl")
+                    unparsed_items = unparsed_items.replace('*TRCL', "TRCL")
                     while unparsed_items is not '':
                         if 'LAT' in cell_dict and 'FILL' in cell_card_options:
                             cell_card_options.pop('FILL')
@@ -241,8 +286,10 @@ class PlainParser:
                         else:
                             unparsed_items = unparsed_items_new
 
-                parsed_cell = Cell(cell_id, material=mat_id, density=mat_density, bounds=cell_geom, unparsed=unparsed)
+                parsed_cell = Cell(number=cell_id, material=mat_id, density=mat_density, bounds=cell_geom, unparsed=unparsed)
                 parsed_cell.add_options(cell_dict)
+                if parsed_cell.trcl is not None:
+                    parsed_cell.trcl.process()
                 cells.append(parsed_cell)
 
             else:  # like 'j LIKE n BUT list'
@@ -251,7 +298,8 @@ class PlainParser:
 
     @staticmethod
     def _parse_option(content, cards):
-        options = content.replace(' = ', ' ').split()
+        content = content.replace(' = ', ' ')
+        options = content.split()
         options_dict = {}
         unparsed = []
         index = 0
@@ -271,6 +319,9 @@ class PlainParser:
 
     @staticmethod
     def _parse_list(options, func=str):
+        if options[1] == "(":
+            options.remove("(")
+            options.remove(")")
         index = 1
         opt_list = []
         while index < len(options):
