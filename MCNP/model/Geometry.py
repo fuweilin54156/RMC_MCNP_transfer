@@ -149,7 +149,7 @@ class Geometry(BaseModel):
         self.unparsed = unparsed
 
     def check(self):
-        assert len(self.universes) > 0
+        pass
 
     def add_universe(self, univ):
         self.universes.append(univ)
@@ -172,6 +172,10 @@ class Geometry(BaseModel):
     def __iter__(self):
         for univ in self.universes:
             yield univ
+
+    def postprocess(self):
+        # scheme1: do the lattice parameter calculations in MCNP block
+        pass
 
 
 class Surfaces(BaseModel):

@@ -83,6 +83,7 @@ class PlainParser:
         self.parsed_model.model['surface'] = surface_model
         self.parsed_model.model['geometry'] = geometry_model
 
+        self.parsed_model.postprocess()
         return self.parsed_model
 
     @staticmethod
@@ -154,7 +155,7 @@ class PlainParser:
                 mat.update_nuclide(Nuclide(opts[i], opts[i + 1]))
                 i += 2
             except ValueError:
-                print("Warning: mat " + str(opts[0][1:]) + " was not fully parsed!")
+                print(" Warning: mat " + str(opts[0][1:]) + " was not fully parsed!")
                 break
         return mat
 
@@ -190,7 +191,7 @@ class PlainParser:
                 if surf_type in Surface.surf_type_para:
                     [surf, unpar] = PlainParser._parse_option(other_vars, Surface.surf_type_para)
                     if unpar is not '':
-                        surf_unparsed += 'Warning: No parsed card: ' + str(unpar) + ' '
+                        surf_unparsed += ' Warning: No parsed card: ' + str(unpar) + ' '
                     surface = Surface(number=surf_id, stype=surf_type, parameters=surf[surf_type],
                                       boundary=surf_boundary, pair=surf_pair, tr=Transformation(num=surf_tr),
                                       unparsed=surf_unparsed)
