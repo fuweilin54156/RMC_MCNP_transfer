@@ -276,7 +276,7 @@ class PlainParser:
                     unparsed_items = ' '.join(cell.split()[index:])
                     while unparsed_items is not '':
                         if 'LAT' in cell_dict and 'FILL' in cell_card_options:
-                            cell_card_options.pop('FILL')
+                            cell_card_options['FILL'] = ['list', int, -1]
                         [cell_dict_item, unparsed_items_new] = PlainParser._parse_option(unparsed_items,
                                                                                          cell_card_options)
                         if cell_dict_item:
@@ -377,6 +377,11 @@ class PlainParser:
         opt_list = []
         while index < len(options):
             try:
+                # to parse the fill card
+                if options[index] == ":":
+                    opt_list.append(options[index])
+                    index += 1
+                    continue
                 value = func(options[index])
                 index += 1
                 opt_list.append(value)

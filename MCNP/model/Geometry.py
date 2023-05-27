@@ -118,12 +118,14 @@ class Cell(BaseModel):
         else:
             s += '         '
         s += self.bounds + ' '
-        if self.fill is not None:
-            s += 'fill=%d ' % self.fill
         if self.universe != 0:
             s += 'u=%d ' % self.universe
         if self.lat is not None:
             s += 'lat=%d ' % self.lat
+            s += 'fill=' + ' '.join([str(x) for x in self.fill])
+        else:
+            if self.fill is not None:
+                s += 'fill=%d ' % self.fill
         s += '\n'
         if self.unparsed is not None and self.unparsed != '':
             s += ' Warning: No parserd options : ' + self.unparsed + '\n'
