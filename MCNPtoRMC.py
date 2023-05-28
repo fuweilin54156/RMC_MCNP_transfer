@@ -139,6 +139,7 @@ def transfer(inp_MCNP):
                 R_universes.append(R_universe1)
                 R_universes_ids.append(out_universe_id)
             elif cell.lat is not None and cell.lat == 2:
+                print(' Warning: the lat params are uncorrected processed in MCNP cell ' + str(cell.number))
                 R_lattice = RMCGeometry.Lattice(type=cell.lat)
                 R_universe1 = RMCGeometry.Universe(number=out_universe_id, lattice=R_lattice)
                 R_universes.append(R_universe1)
