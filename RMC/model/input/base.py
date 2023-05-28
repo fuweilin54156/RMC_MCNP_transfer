@@ -39,6 +39,7 @@ class Model(YMLModelObject):
             model = {
                 'geometry': None,
                 'surface': None,
+                'macrobody': None,
                 'material': None,
                 'refuelling': None,
                 'includematerial': None,
@@ -52,7 +53,6 @@ class Model(YMLModelObject):
                 'binaryout': None,
                 'externalsource': None,
                 'ptrac': None,
-                'macrobody': None,
                 'physics': None,
                 'fixedsource': None
             }

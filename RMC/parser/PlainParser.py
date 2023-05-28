@@ -529,38 +529,38 @@ class PlainParser:
             if 'MOVE' in body_dict.keys():
                 move = body_dict['MOVE']
             if body_type == 'ELL':
-                macrobodies[body_number] = Ellipsoid(number=body_number, type=body_type, params=body_parameter,
-                                                     rotate=rotate, rotate_angle=rotate_angle, move=move)
+                macrobodies[body_number] = ELL(number=body_number, type=body_type, params=body_parameter,
+                                               rotate=rotate, rotate_angle=rotate_angle, move=move)
             elif body_type == 'RPP':
-                macrobodies[body_number] = Rpp(number=body_number, type=body_type, params=body_parameter,
+                macrobodies[body_number] = RPP(number=body_number, type=body_type, params=body_parameter,
                                                rotate=rotate, rotate_angle=rotate_angle, move=move)
             elif body_type == 'RCC':
-                macrobodies[body_number] = Cylinder(number=body_number, type=body_type, params=body_parameter,
-                                                    rotate=rotate, rotate_angle=rotate_angle, move=move)
+                macrobodies[body_number] = RCC(number=body_number, type=body_type, params=body_parameter,
+                                               rotate=rotate, rotate_angle=rotate_angle, move=move)
             elif body_type == 'BOX':
-                macrobodies[body_number] = Box(number=body_number, type=body_type, params=body_parameter,
+                macrobodies[body_number] = BOX(number=body_number, type=body_type, params=body_parameter,
                                                rotate=rotate, rotate_angle=rotate_angle, move=move)
             elif body_type == 'SPH':
-                macrobodies[body_number] = Sphere(number=body_number, type=body_type, params=body_parameter,
-                                                  rotate=rotate, rotate_angle=rotate_angle, move=move)
+                macrobodies[body_number] = SPH(number=body_number, type=body_type, params=body_parameter,
+                                               rotate=rotate, rotate_angle=rotate_angle, move=move)
             elif body_type == 'TORUS':
-                macrobodies[body_number] = Torus(number=body_number, type=body_type, params=body_parameter,
+                macrobodies[body_number] = TORUS(number=body_number, type=body_type, params=body_parameter,
                                                  rotate=rotate, rotate_angle=rotate_angle, move=move)
             elif body_type == 'HEX' or body_type == 'RHP':
-                macrobodies[body_number] = Hexagonal(number=body_number, type=body_type, params=body_parameter,
-                                                     rotate=rotate, rotate_angle=rotate_angle, move=move)
+                macrobodies[body_number] = HEX(number=body_number, type=body_type, params=body_parameter,
+                                               rotate=rotate, rotate_angle=rotate_angle, move=move)
             elif body_type == 'REC':
-                macrobodies[body_number] = EllCylinder(number=body_number, type=body_type, params=body_parameter,
-                                                       rotate=rotate, rotate_angle=rotate_angle, move=move)
+                macrobodies[body_number] = REC(number=body_number, type=body_type, params=body_parameter,
+                                               rotate=rotate, rotate_angle=rotate_angle, move=move)
             elif body_type == 'TRC':
-                macrobodies[body_number] = Cone(number=body_number, type=body_type, params=body_parameter,
-                                                rotate=rotate, rotate_angle=rotate_angle, move=move)
+                macrobodies[body_number] = TRC(number=body_number, type=body_type, params=body_parameter,
+                                               rotate=rotate, rotate_angle=rotate_angle, move=move)
             elif body_type == 'WED':
-                macrobodies[body_number] = Wedge(number=body_number, type=body_type, params=body_parameter,
-                                                 rotate=rotate, rotate_angle=rotate_angle, move=move)
+                macrobodies[body_number] = WED(number=body_number, type=body_type, params=body_parameter,
+                                               rotate=rotate, rotate_angle=rotate_angle, move=move)
             elif body_type == 'SEC':
-                macrobodies[body_number] = CylSector(number=body_number, type=body_type, params=body_parameter,
-                                                     rotate=rotate, rotate_angle=rotate_angle, move=move)
+                macrobodies[body_number] = SEC(number=body_number, type=body_type, params=body_parameter,
+                                               rotate=rotate, rotate_angle=rotate_angle, move=move)
         return Macrobodies(macrobodies=macrobodies)
 
     @staticmethod

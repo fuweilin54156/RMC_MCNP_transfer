@@ -5,6 +5,7 @@
 
 import RMC.model.input.Material as RMCMat
 import RMC.model.input.Geometry as RMCGeometry
+import RMC.model.input.MacroBody as RMCMacrobody
 import RMC.model.input.Criticality as RMCCriticality
 from RMC.model.input.base import Model as RMCModel
 import MCNP.parser.PlainParser as MCNPParser
@@ -13,7 +14,6 @@ import re
 
 
 def transfer(inp_MCNP):
-
     print('Processing file: ' + inp_MCNP + ' ...')
 
     M_model = MCNPParser.PlainParser(inp_MCNP).parsed
@@ -46,6 +46,27 @@ def transfer(inp_MCNP):
 
     R_surfaces_model = RMCGeometry.Surfaces(surfaces=R_surfaces)
     test = str(R_surfaces_model)
+
+    # transfer macrobody block
+    R_macrobodys = []
+    for M_body in M_model.model['surface'].macrobodys:
+        if M_body.tr is not None:
+            if M_body.tr.rotate is not None:
+                body = RMCMacrobody.MacroBody.externalization(number=M_body.body_number, type=M_body.type,
+                                                              parameters=M_body.params, move=M_body.tr.move,
+                                                              rotate=np.array(M_body.tr.rotate).reshape([3, 3]))
+            else:
+                body = RMCMacrobody.MacroBody.externalization(number=M_body.body_number, type=M_body.type,
+                                                              parameters=M_body.params,
+                                                              move=M_body.tr.move)
+            R_macrobodys.append(body)
+        else:
+            body = RMCMacrobody.MacroBody.externalization(number=M_body.body_number, type=M_body.type,
+                                                          parameters=M_body.params)
+            R_macrobodys.append(body)
+
+    R_macrobodys_model = RMCMacrobody.Macrobodies(macrobodies=R_macrobodys)
+    test = str(R_macrobodys_model)
 
     # transfer material block
     R_materials = []
@@ -131,7 +152,7 @@ def transfer(inp_MCNP):
     # 添加 lat 里填充的 Universe 的 move 卡
     for univ in R_universes:
         if univ.lattice is not None:
-            move = np.array(univ.lattice.pitch)/2
+            move = np.array(univ.lattice.pitch) / 2
             for fill_univ_id in univ.lattice.fill:
                 for univ2 in R_universes:
                     if univ2.number == fill_univ_id:
@@ -147,6 +168,7 @@ def transfer(inp_MCNP):
     # combine RMC model
     R_model.model['geometry'] = R_geometry_model
     R_model.model['surface'] = R_surfaces_model
+    R_model.model['macrobody'] = R_macrobodys_model
     R_model.model['material'] = R_materials_model
 
     # set the Criticality block

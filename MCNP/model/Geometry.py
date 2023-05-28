@@ -4,6 +4,7 @@
 import os
 
 from MCNP.model.base import YMLModelObject as BaseModel
+from MCNP.model.MacroBody import *
 import numpy as np
 
 
@@ -181,10 +182,13 @@ class Geometry(BaseModel):
 class Surfaces(BaseModel):
     yaml_tag = u'!surfaces'
 
-    def __init__(self, surfaces=None, unparsed=''):
+    def __init__(self, surfaces=None, macrobodys=None, unparsed=''):
         self.surfaces = surfaces
         if self.surfaces is None:
             self.surfaces = []
+        self.macrobodys = macrobodys
+        if self.macrobodys is None:
+            self.macrobodys = []
         self.unparsed = unparsed
 
     def check(self):
@@ -225,6 +229,8 @@ class Surfaces(BaseModel):
         s = ''
         for surf in self.surfaces:
             s += str(surf)
+        for body in self.macrobodys:
+            s += str(body)
         if self.unparsed:
             s += 'Warning: No parsed cards in Surface block: \n' + self.unparsed
         s += '\n\n'

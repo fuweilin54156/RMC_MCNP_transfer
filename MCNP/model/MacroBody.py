@@ -26,11 +26,13 @@ class MacroBody(BaseModel):
         'MOVE': ['list', float, 3]
     }
 
-    def __init__(self, number=None, type=None, params=None, rotate=None, rotate_angle=None, move=None):
+    def __init__(self, number=None, type=None, params=None, rotate=None, rotate_angle=None, move=None, tr=None, unparsed=''):
         self.params = params
         self.type = type
         self.body_number = number
         self.surf_ids = []
+        self.tr = tr
+        self.unparsed = unparsed
 
         self._rotate = rotate
         self._rotate_angle = rotate_angle
@@ -62,31 +64,21 @@ class MacroBody(BaseModel):
         pass
 
     def __str__(self):
-        card = 'Body ' + str(self.body_number) + ' ' + self.type.lower() + ' '
-        surf_para = ' '.join([f'{x:.12g}' for x in self.params])
+        card = str(self.body_number) + ' ' + self.type + ' '
+        surf_para = ' '.join([str(x) for x in self.params]) if isinstance(self.params, list) else ' ' + str(
+            self.params)
         card += surf_para
-        if self._move is not None:
-            card += ' move = ' + ' '.join([str(x) for x in self._move])
-        if self._rotate is not None:
-            card += ' rotate = ' + ' '.join([str(x) for x in self._rotate.reshape([9])])
         card += '\n'
+        if self.unparsed:
+            card += self.unparsed + '\n'
         return card
 
-    @staticmethod
-    def externalization(number=None, type=None, parameters=None, rotate=None, rotate_angle=None, move=None):
-        """ externalize macrobody object according to macrobody type
 
-        Returns
-        -------
-        the externalized macrobody object
-        """
-        attribute = re.sub('/', '_', type, re.I)
-        return getattr(sys.modules[__name__], attribute)(number=number, type=type, params=parameters,
-                                                         rotate=rotate, rotate_angle=rotate_angle, move=move)
-
-
-class RCC(MacroBody):
+class Cylinder(MacroBody):
     # 圆柱类
+
+    def __str__(self):
+        pass
 
     def __init__(self, number, type, params, rotate=None, rotate_angle=None, move=None):
         super().__init__(number=number, type=type, params=params, rotate=rotate, rotate_angle=rotate_angle, move=move)
@@ -166,7 +158,9 @@ class RCC(MacroBody):
             return f'({self.surf_ids[0]}:{self.surf_ids[1]}:{-self.surf_ids[2]})'
 
 
-class RPP(MacroBody):
+class Rpp(MacroBody):
+    def __str__(self):
+        pass
 
     # 平行于坐标轴的长方体
     def __init__(self, number, type, params, rotate=None, rotate_angle=None, move=None):
@@ -199,8 +193,11 @@ class RPP(MacroBody):
                    f':{-self.surf_ids[5]})'
 
 
-class BOX(MacroBody):
+class Box(MacroBody):
     # 任意方向的长方体
+
+    def __str__(self):
+        pass
 
     def __init__(self, number, type, params, rotate=None, rotate_angle=None, move=None):
         super().__init__(number=number, type=type, params=params, rotate=rotate, rotate_angle=rotate_angle, move=move)
@@ -257,8 +254,11 @@ class BOX(MacroBody):
                    f':{-self.surf_ids[5]})'
 
 
-class SPH(MacroBody):
+class Sphere(MacroBody):
     # 球体
+
+    def __str__(self):
+        pass
 
     def __init__(self, number, type, params, rotate=None, rotate_angle=None, move=None):
         super().__init__(number=number, type=type, params=params, rotate=rotate, rotate_angle=rotate_angle, move=move)
@@ -285,8 +285,10 @@ class SPH(MacroBody):
             return f'{self.surf_ids[0]}'
 
 
-class TORUS(MacroBody):
+class Torus(MacroBody):
     # 圆环体
+    def __str__(self):
+        pass
 
     def __init__(self, number, type, params, rotate=None, rotate_angle=None, move=None):
         super().__init__(number=number, type=type, params=params, rotate=rotate, rotate_angle=rotate_angle, move=move)
@@ -329,8 +331,10 @@ class TORUS(MacroBody):
             return f'{self.surf_ids[0]}'
 
 
-class ELL(MacroBody):
+class Ellipsoid(MacroBody):
     # 旋转椭球面
+    def __str__(self):
+        pass
 
     def __init__(self, number, type, params, rotate=None, rotate_angle=None, move=None):
         super().__init__(number=number, type=type, params=params, rotate=rotate, rotate_angle=rotate_angle, move=move)
@@ -410,8 +414,10 @@ class ELL(MacroBody):
             return f'{self.surf_ids[0]}'
 
 
-class HEX(MacroBody):
+class Hexagonal(MacroBody):
     # 六棱柱
+    def __str__(self):
+        pass
 
     def __init__(self, number, type, params, rotate=None, rotate_angle=None, move=None):
         super().__init__(number=number, type=type, params=params, rotate=rotate, rotate_angle=rotate_angle, move=move)
@@ -487,8 +493,10 @@ class HEX(MacroBody):
                    f':{-self.surf_ids[5]}:{self.surf_ids[6]}:{-self.surf_ids[7]})'
 
 
-class REC(MacroBody):
+class EllCylinder(MacroBody):
     # 椭圆柱
+    def __str__(self):
+        pass
 
     def __init__(self, number, type, params, rotate=None, rotate_angle=None, move=None):
         super().__init__(number=number, type=type, params=params, rotate=rotate, rotate_angle=rotate_angle, move=move)
@@ -630,8 +638,10 @@ class REC(MacroBody):
             return f'({self.surf_ids[0]}:{self.surf_ids[1]}:{-self.surf_ids[2]})'
 
 
-class TRC(MacroBody):
+class Cone(MacroBody):
     # 圆台
+    def __str__(self):
+        pass
 
     def __init__(self, number, type, params, rotate=None, rotate_angle=None, move=None):
         super().__init__(number=number, type=type, params=params, rotate=rotate, rotate_angle=rotate_angle, move=move)
@@ -763,10 +773,12 @@ class TRC(MacroBody):
             return f'({self.surf_ids[0]}:{self.surf_ids[1]}:{-self.surf_ids[2]})'
 
 
-class WED(MacroBody):
+class Wedge(MacroBody):
     # 三棱柱
     surface_sign = []  # 判断在该法向量下，侧面三个平面的符号
 
+    def __str__(self):
+        pass
 
     def __init__(self, number, type, params, rotate=None, rotate_angle=None, move=None):
         super().__init__(number=number, type=type, params=params, rotate=rotate, rotate_angle=rotate_angle, move=move)
@@ -852,9 +864,12 @@ class WED(MacroBody):
             return bool_list
 
 
-class SEC(MacroBody):
+class CylSector(MacroBody):
     # 圆柱扇体
     surface_sign = []  # 判断在该法向量下，圆柱扇体两个侧平面内部与外部的符号
+
+    def __str__(self):
+        pass
 
     def __init__(self, number, type, params, rotate=None, rotate_angle=None, move=None):
         super().__init__(number=number, type=type, params=params, rotate=rotate, rotate_angle=rotate_angle, move=move)
@@ -990,20 +1005,13 @@ class SEC(MacroBody):
 class Macrobodies(BaseModel):
     yaml_tag = u'!macrobodies'
 
+    def __str__(self):
+        pass
+
     def __init__(self, macrobodies=None):
         self.macrobodies = macrobodies
         if self.macrobodies is None:
-            self.macrobodies = []
+            self.macrobodies = {}
 
     def check(self):
         pass
-
-    def __str__(self):
-        if len(self.macrobodies) > 0:
-            s = 'MACROBODY\n'
-            for body in self.macrobodies:
-                s += str(body)
-            s += '\n\n'
-            return s
-        else:
-            return ''

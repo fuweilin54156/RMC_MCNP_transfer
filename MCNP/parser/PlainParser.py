@@ -34,7 +34,7 @@ class PlainParser:
 
         [cells, geom_unparsed] = self.__parse_geometry(geometry_card)
         geometry_model = Geometry(cells=cells, unparsed=geom_unparsed)
-        surface_model = self.__parse_surface(surface_card)
+        surface_model = self.__parse_surface_microbody(surface_card)
 
         if len(self.content) > 1:
             other_card = self.content[2]
@@ -160,8 +160,9 @@ class PlainParser:
         return mat
 
     @staticmethod
-    def __parse_surface(content):
+    def __parse_surface_microbody(content):
         surfaces = []
+        macrobodys = []
         unparsed = ''
         for option in content:
             surf_boundary = None
@@ -188,20 +189,25 @@ class PlainParser:
                 else:
                     surf_type = words[1].upper()
                     other_vars = ' '.join(words[1:])
-                if surf_type in Surface.surf_type_para:
+                if surf_type in Surface.surf_type_para:  # the surface case
                     [surf, unpar] = PlainParser._parse_option(other_vars, Surface.surf_type_para)
                     if unpar is not '':
-                        surf_unparsed += ' Warning: No parsed card: ' + str(unpar) + ' '
+                        surf_unparsed += ' Warning: No parsed card " ' + str(unpar) + ' " in surf ' + str(surf_id)
                     surface = Surface(number=surf_id, stype=surf_type, parameters=surf[surf_type],
                                       boundary=surf_boundary, pair=surf_pair, tr=Transformation(num=surf_tr),
                                       unparsed=surf_unparsed)
                     surfaces.append(surface)
-                else:
-                    unparsed += option + '\n'
+                elif surf_type in MacroBody.body_type_para:  # the macrobody case
+                    [body, unpar] = PlainParser._parse_option(other_vars, MacroBody.body_type_para)
+                    if unpar is not '':
+                        surf_unparsed += ' Warning: No parsed card " ' + str(unpar) + ' " in body ' + str(surf_id)
+                    body = MacroBody(number=surf_id, type=surf_type, params=body[surf_type],
+                                     tr=Transformation(num=surf_tr), unparsed=surf_unparsed)
+                    macrobodys.append(body)
             else:
                 unparsed += option + '\n'
 
-        return Surfaces(surfaces=surfaces, unparsed=unparsed)
+        return Surfaces(surfaces=surfaces, macrobodys=macrobodys, unparsed=unparsed)
 
     @staticmethod
     def __parse_tr(content):
