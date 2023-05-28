@@ -128,14 +128,14 @@ def transfer(inp_MCNP):
         if not established_univ:
             R_lattice = None
             if cell.lat is not None and cell.lat == 1:
-                [scope, pitch, fill, move] = transfer_lat1(cell, R_surfaces_model)
+                [scope, pitch, fill, move] = transfer_lat1(cell, R_surfaces_model, R_macrobodys_model)
                 R_lattice = RMCGeometry.Lattice(type=cell.lat, scope=scope, pitch=pitch, fill=fill)
                 R_universe1 = RMCGeometry.Universe(number=out_universe_id, lattice=R_lattice,
                                                    transformation=RMCGeometry.Transformation(move=move))
-                # R_universe2 = RMCGeometry.Universe(number=out_universe_id * 1000 + 1)
-                # R_universe2.cells.append(R_cell)
-                # R_universes.append(R_universe2)
-                # R_universes_ids.append(out_universe_id * 1000 + 1)
+                R_universe2 = RMCGeometry.Universe(number=out_universe_id * 1000 + 1)
+                R_universe2.cells.append(R_cell)
+                R_universes.append(R_universe2)
+                R_universes_ids.append(out_universe_id * 1000 + 1)
                 R_universes.append(R_universe1)
                 R_universes_ids.append(out_universe_id)
             elif cell.lat is not None and cell.lat == 2:
@@ -187,7 +187,7 @@ def transfer(inp_MCNP):
     print('file: [' + inp_MCNP + '] have been processed!')
 
 
-def transfer_lat1(cell, R_surfaces):
+def transfer_lat1(cell, R_surfaces, R_macrobodys):
     scope = np.zeros(3)
     pitch = np.zeros(3)
     fill = np.ones(1)
@@ -214,7 +214,8 @@ def transfer_lat1(cell, R_surfaces):
                 z_right = params[8]
                 index = 9
     scope = np.array([x_right - x_left + 1, y_right - y_left + 1, z_right - z_left + 1])
-    fill = np.array(params[index:])
+    # fill = np.array(params[index:].replace(cell.universe, cell.universe*1000+1))
+    fill = np.array([i if i is not cell.universe else i*1000+1 for i in params[index:]])
     nums_in_bounds = re.findall(r'[0-9]+', cell.bounds)
     nums_in_bounds = [int(i) for i in nums_in_bounds]
     if len(nums_in_bounds) > 1:  # not Macrobody case
@@ -259,7 +260,18 @@ def transfer_lat1(cell, R_surfaces):
             else:
                 print(' Warning: the lat params are uncorrected processed in MCNP cell ' + str(cell.number))
     else:
-        print(' Warning: the lat params are uncorrected processed in MCNP cell ' + str(cell.number))
+        # Macrobody case, only support "RPP"
+        body_num = nums_in_bounds[0]
+        for body in R_macrobodys.macrobodies:
+            if body_num == body.body_number:
+                bound_body = body
+                break
+        if bound_body.type in ['RPP']:
+            pitch[0] = abs(bound_body.params[0]-bound_body.params[1])
+            pitch[1] = abs(bound_body.params[2]-bound_body.params[3])
+            pitch[2] = abs(bound_body.params[4]-bound_body.params[5])
+        else:
+            print(' Warning: the lat params are uncorrected processed in MCNP cell ' + str(cell.number))
 
     # process move
     move[0] = pitch[0] * (x_left - 0.5)
