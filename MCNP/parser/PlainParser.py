@@ -8,6 +8,7 @@ from MCNP.parser.PlainFormatter import PlainFormatter
 from MCNP.model.base import Model as InputModel
 from MCNP.model.Geometry import *
 from MCNP.model.Material import *
+from MCNP.model.Source import *
 
 
 class PlainParser:
@@ -34,7 +35,7 @@ class PlainParser:
 
         [cells, geom_unparsed] = self.__parse_geometry(geometry_card)
         geometry_model = Geometry(cells=cells, unparsed=geom_unparsed)
-        surface_model = self.__parse_surface_microbody(surface_card)
+        surface_model = self.__parse_surface_macrobody(surface_card)
 
         if len(self.content) > 1:
             other_card = self.content[2]
@@ -78,10 +79,17 @@ class PlainParser:
                                 surface.tr.move = tr_model[i].move
                                 surface.tr.rotate = tr_model[i].rotate
 
-            self.parsed_model.model['unparsed'] = other_cards[3]
+            # process SDEF card
+            sdef_card = other_cards[3]
+            sdef_model = self.__parse_sdef(sdef_card)
+
+            self.parsed_model.model['unparsed'] = other_cards[4]
+
+
 
         self.parsed_model.model['surface'] = surface_model
         self.parsed_model.model['geometry'] = geometry_model
+        self.parsed_model.model['externalsource'] = sdef_model
 
         self.parsed_model.postprocess()
         return self.parsed_model
@@ -113,6 +121,7 @@ class PlainParser:
         mat_lines = []
         imp_lines = []
         trcl_lines = []
+        sdef_lines = []
         un_parsed = []
         for line in lines:
             words = line.split(' ')
@@ -124,9 +133,19 @@ class PlainParser:
                 imp_lines.append(line)
             elif re.match(r'tr', words[0], re.I) or re.match(r'\*tr', words[0], re.I):
                 trcl_lines.append(line)
+            elif re.match(r'SDEF', words[0], re.I):
+                sdef_lines.append(line)
+            elif re.match(r'SP', words[0], re.I):
+                sdef_lines.append(line)
+            elif re.match(r'SI', words[0], re.I):
+                sdef_lines.append(line)
+            elif re.match(r'SB', words[0], re.I):
+                sdef_lines.append(line)
+            elif re.match(r'DS', words[0], re.I):
+                sdef_lines.append(line)
             else:
                 un_parsed.append(line)
-        return [mat_lines, imp_lines, trcl_lines, un_parsed]
+        return [mat_lines, imp_lines, trcl_lines, sdef_lines, un_parsed]
 
     @staticmethod
     def __parse_material(content):
@@ -160,7 +179,7 @@ class PlainParser:
         return mat
 
     @staticmethod
-    def __parse_surface_microbody(content):
+    def __parse_surface_macrobody(content):
         surfaces = []
         macrobodys = []
         unparsed = ''
@@ -347,6 +366,41 @@ class PlainParser:
         return [cells, geo_unparsed]
 
     @staticmethod
+    def __parse_sdef(content):
+        source_list = []
+        distribution_list = []
+        unparsed = ''
+        for option in content:
+            if option.split()[0].upper() == 'SDEF':
+                source = Source()
+                opt_lst = PlainParser._parse_multioption(option.split(' ', 1)[1], Source.card_option_types)
+                source.add_options(opt_lst)
+                source_list.append(source)
+            elif re.match(r'SP', option, flags=re.I):
+                distribution = Distribution()
+                sp_list = PlainParser._parse_multioption(option, Distribution.card_option_types)
+                distribution.add_options(sp_list)
+                distribution_list.append(distribution)
+            elif re.match(r'SI', option, flags=re.I):
+                distribution = Distribution()
+                si_list = PlainParser._parse_multioption(option, Distribution.card_option_types)
+                distribution.add_options(si_list)
+                distribution_list.append(distribution)
+            elif re.match(r'SB', option, flags=re.I):
+                distribution = Distribution()
+                sb_list = PlainParser._parse_multioption(option, Distribution.card_option_types)
+                distribution.add_options(sb_list)
+                distribution_list.append(distribution)
+            elif re.match(r'DS', option, flags=re.I):
+                distribution = Distribution()
+                ds_list = PlainParser._parse_multioption(option, Distribution.card_option_types)
+                distribution.add_options(ds_list)
+                distribution_list.append(distribution)
+            else:
+                unparsed += option
+        return ExternalSource(source=source_list, distributions=distribution_list, unparsed=unparsed)
+
+    @staticmethod
     def _parse_option(content, cards):
         content = content.replace(' = ', ' ')
         options = content.split()
@@ -376,6 +430,26 @@ class PlainParser:
             return [options_dict, unparsed]
 
     @staticmethod
+    def _parse_multioption(content, cards):
+        options = content.replace(' = ', ' ').split()
+        options_dict = {}
+        while options:
+            options[0] = options[0].upper()
+            if options[0] in cards:
+                dtype = cards[options[0]]
+                if dtype[0] == 'list':
+                    [opt_val, index] = PlainParser._parse_multilist(options, dtype[1])
+                else:
+                    [opt_val, index] = PlainParser._parse_val(options, dtype[0])
+
+                options_dict[options[0]] = opt_val
+                # 移除已经解析过的部分
+                options = options[index:]
+            else:
+                raise ValueError('%s can not be recognized in %s.' % (options[0], content))
+        return options_dict
+
+    @staticmethod
     def _parse_list(options, func=str):
         if options[1] == "(":
             options.remove("(")
@@ -394,6 +468,56 @@ class PlainParser:
                 opt_list.append(value)
             except ValueError:
                 break
+        # todo: check
+        return [opt_list, index]
+
+    @staticmethod
+    def _parse_multilist(options, func=str):
+        index = 1
+        opt_list = []
+        while index < len(options):
+            # 在燃耗中可以输入星号*，后面接一正整数n，表示重复n次
+            if options[index] == '*':
+                try:
+                    value = func(options[index - 1])
+                    # todo 容错处理，如用户输入 3 * 1.2，或者 * 前后不完整
+                    # todo RMC中的 * 有两种用途：一种表示重复次数，还有一种用在栅元计数器中，
+                    #  表示展开所有底层栅元。现在代码还没有处理第二种逻辑。
+                    # range里面 -1 是因为在读到 * 之前已经append过一次了
+                    for repeat in range(int(options[index + 1]) - 1):
+                        opt_list.append(value)
+                    index += 2
+                except ValueError:
+                    option = options[index] + options[index + 1]  # 处理celltally中*36这种情况
+                    opt_list.append(option)
+                    index += 2
+                    break
+            elif re.fullmatch(r'\*\d+|\(|\)|:|>', options[index]):
+                opt_list.append(options[index])
+                index += 1
+            elif re.fullmatch(r'[BD]', options[index].upper()):
+                if options[0].upper() != 'SP':
+                    option = options[index] + options[index + 1]
+                    opt_list.append(option)
+                    index += 2
+                else:
+                    try:
+                        value = func(options[index])
+                        index += 1
+                        opt_list.append(value)
+                    except ValueError:
+                        break
+            elif re.fullmatch(r'FCEL', options[index].upper()):
+                option = options[index]
+                opt_list.append(option)
+                index += 1
+            else:
+                try:
+                    value = func(options[index])
+                    index += 1
+                    opt_list.append(value)
+                except ValueError:
+                    break
         # todo: check
         return [opt_list, index]
 
