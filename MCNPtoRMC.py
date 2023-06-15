@@ -167,19 +167,20 @@ def transfer(inp_MCNP):
     R_geometry_model = RMCGeometry.Geometry(universes=R_universes)
     test3 = str(R_geometry_model)
 
-    R_externalsource = []
     # source_list = []
     Combined_distribution = Combine_distrtibution(M_model.model['externalsource'].distributions)
-    Distribution= []
+    h5source = None
+    surfsrcread_list = []
     unparsed = ''
     [RMC_Distribution, RMC_source] = Transfer_source(Combined_distribution, M_model.model['externalsource'].source, R_universes)
-
+    R_externalsource = ExternalSource(source=RMC_source, surfsrcread=surfsrcread_list, distributions=RMC_Distribution,
+                                      h5source=h5source, unparsed=unparsed)
     # combine RMC model
     R_model.model['geometry'] = R_geometry_model
     R_model.model['surface'] = R_surfaces_model
     R_model.model['macrobody'] = R_macrobodys_model
     R_model.model['material'] = R_materials_model
-    # R_model.model['externalsource'] = RMC_option
+    R_model.model['externalsource'] = R_externalsource
 
     # set the Criticality block
     power_iter = {"KEFF0": 1, "POPULATION": [10000, 50, 300], "BATCHNUM": 1}
@@ -313,6 +314,7 @@ def Transfer_source(distributions, sources, R_universes):
                         transfer_id['CELL'] = int(re.findall("\d+", cell)[0])
     distribution_ID = distributions.keys()
     rmc_distribution = []
+    rmc_source = []
     for id in distribution_ID:
         cell = False
         pos = False
@@ -334,13 +336,15 @@ def Transfer_source(distributions, sources, R_universes):
         if "SI" in distribution_value:
             si_value = distribution_value['SI']
             if cell:
-                cell_list = postprocess(si_value, R_universes)
+                type_value = postprocess(si_value, R_universes)
+                type = 3
             si_option = None
             for value in si_value:
                 if value.isalpha():
                     si_option = value
                 else:
-                    type_value.append(value)
+                    if not cell:
+                        type_value.append(value)
             if si_option == None:
                 si_option = 'H'
                 type = 4
@@ -370,7 +374,7 @@ def Transfer_source(distributions, sources, R_universes):
         if "DS" in distribution_value:
             ds_value = distribution_value['DS']
             ds_option = None
-            depend_id = 1
+            depend_id = '1'
             type = 0
             for value in ds_value:
                 if value.isalpha():
@@ -378,6 +382,84 @@ def Transfer_source(distributions, sources, R_universes):
                 else:
                     type_value.append(int(value))
         rmc_distribution.append(Distribution(id=id, depend=depend_id, type=type, value=type_value, probability=probability_value, bias=bias_value))
+    for pos, source in enumerate(sources):
+        cell_value = None
+        fraction_value = None
+        partilce_value = [1]
+        point_value = None
+        sphere_value = None
+        cyl_x_value = None
+        cyl_y_value = None
+        cyl_z_value = None
+        surface_value = None
+        x_value = None
+        y_value = None
+        z_value = None
+        position_value = None
+        radius_value = None
+        axis_value = None
+        polar_value = None
+        polartheta_value = None
+        extent_value = None
+        height_value = None
+        norm_value = None
+        vector_value = None
+        direcmiu_value = None
+        faivector_value = None
+        direcfai_value = None
+        energy_value = None
+        sampeff_value = None
+        biasfrac_value = None
+        weight_value = None
+        transform_value = None
+        if source.cell is not None:
+            cell_value = source.cell
+        if source.pos is not None:
+            position_value = source.pos
+        if source._x is not None:
+            if re.search(r'F', source._x[0]):
+                x_value = [source._x[1]]
+            else:
+                x_value = source._x
+        if source._y is not None:
+            if re.search(r'F', source._y[0]):
+                y_value = [source._y[1]]
+            else:
+                y_value = source._y
+        if source._z is not None:
+            if re.search(r'F', source._z[0]):
+                z_value = [source._z[1]]
+            else:
+                z_value = source._z
+        if source._sur is not None:
+            surface_value = source._sur
+        if source._erg is not None:
+            energy_value = source._erg
+        if source._dir is not None:
+            direcmiu_value = source._dir
+        if source._vec is not None:
+            vector_value = source._vec
+        if source._nrm is not None:
+            norm_value = source._nrm
+        if source._rad is not None:
+            radius_value = source._rad
+        if source._ext is not None:
+            extent_value = source._ext
+        if source._axs is not None:
+            axis_value = source._axs
+        if source._wgt is not None:
+            weight_value = source._wgt
+        if source._tr is not None:
+            transform_value = source._tr
+        if source._eff is not None:
+            sampeff_value = source._eff
+        if source._par is not None:
+            partilce_value = [source._par]
+        rmc_source.append(Source(source_id=pos+1, fraction=fraction_value, particle=partilce_value, point=point_value, sphere=sphere_value, cyl_x=cyl_x_value, cyl_y=cyl_y_value,
+                 cyl_z=cyl_z_value, surface=surface_value, x=x_value, y=y_value, z=z_value, position=position_value, radius=radius_value, axis=axis_value, polar=polar_value,
+                 polartheta=polartheta_value, extent=extent_value, height=height_value, norm=norm_value, vector=vector_value, direcmiu=direcmiu_value, faivector=faivector_value,
+                 direcfai=direcfai_value, energy=energy_value, cell=cell_value, sampeff=sampeff_value, biasfrac=biasfrac_value, weight=weight_value, transform=transform_value))
+    return [rmc_distribution, rmc_source]
 
 
 def Combine_distrtibution(source_distribution):
@@ -463,7 +545,8 @@ def process_cell_expansion(expansion=None, univ_dict=None, cell_dict=None, value
             cell = cell_dict[int(cell_lattice[0])]
             # for the bottom cell without filling
             if cell.fill is None:
-                value.append(int(cell_lattice[0]))
+                if int(cell_lattice[0]) == int(re.findall(r'-?\d+', cell_expansion[-1])[0]):
+                    value.append(int(cell_lattice[0]))
                 del cell_expansion[0]
                 continue
             else:
@@ -479,9 +562,19 @@ def process_cell_expansion(expansion=None, univ_dict=None, cell_dict=None, value
                 del cell_expansion[0]
 
         elif len(cell_lattice) == 3:
-            x = abs(int(cell_lattice[0]))
-            y = abs(int(cell_lattice[1]))
-            z = abs(int(cell_lattice[2]))
+            if int(cell_lattice[0]) < 0:
+                x = abs(int(cell_lattice[0])) + 1
+            else:
+                x = 2 * int(cell_lattice[0]) + 1
+            if int(cell_lattice[1]) < 0:
+                y = abs(int(cell_lattice[1])) + 1
+            else:
+                y = 2 * int(cell_lattice[1]) + 1
+            if int(cell_lattice[2]) < 0:
+                z = abs(int(cell_lattice[2])) + 1
+            else:
+                z = 2 * int(cell_lattice[2]) + 1
+
 
             lattice_index = x + scope[0] * (y - 1) + scope[0] * scope[1] * (z - 1)
 
