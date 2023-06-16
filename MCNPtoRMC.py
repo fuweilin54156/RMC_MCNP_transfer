@@ -7,6 +7,7 @@ import RMC.model.input.Material as RMCMat
 import RMC.model.input.Geometry as RMCGeometry
 import RMC.model.input.MacroBody as RMCMacrobody
 import RMC.model.input.Criticality as RMCCriticality
+from RMC.model.input.ExternalSource import *
 from RMC.model.input.base import Model as RMCModel
 import MCNP.parser.PlainParser as MCNPParser
 import numpy as np
@@ -166,11 +167,20 @@ def transfer(inp_MCNP):
     R_geometry_model = RMCGeometry.Geometry(universes=R_universes)
     test3 = str(R_geometry_model)
 
+    # source_list = []
+    Combined_distribution = Combine_distrtibution(M_model.model['externalsource'].distributions)
+    h5source = None
+    surfsrcread_list = []
+    unparsed = ''
+    [RMC_Distribution, RMC_source] = Transfer_source(Combined_distribution, M_model.model['externalsource'].source, R_universes)
+    R_externalsource = ExternalSource(source=RMC_source, surfsrcread=surfsrcread_list, distributions=RMC_Distribution,
+                                      h5source=h5source, unparsed=unparsed)
     # combine RMC model
     R_model.model['geometry'] = R_geometry_model
     R_model.model['surface'] = R_surfaces_model
     R_model.model['macrobody'] = R_macrobodys_model
     R_model.model['material'] = R_materials_model
+    R_model.model['externalsource'] = R_externalsource
 
     # set the Criticality block
     power_iter = {"KEFF0": 1, "POPULATION": [10000, 50, 300], "BATCHNUM": 1}
@@ -280,3 +290,303 @@ def transfer_lat1(cell, R_surfaces, R_macrobodys):
     move[2] = pitch[2] * (z_left - 0.5)
 
     return scope, pitch, fill, move
+
+
+def Transfer_source(distributions, sources, R_universes):
+    function_transfer = {'-2': -3, '-3': -4, '-4': -5, '-5': -6, '-21': -1, '-31': -2}
+    transfer_id = {}
+    for source in sources:
+        if source.pos:
+            Pos = source.pos
+            for pos in Pos:
+                if re.match(r'D', pos, flags=re.IGNORECASE):
+                    if 'POS' in transfer_id.keys():
+                        transfer_id['POS'] += int(re.findall("\d+", pos)[0])
+                    else:
+                        transfer_id['POS'] = int(re.findall("\d+", pos)[0])
+        if source.cell:
+            cells = source.cell
+            for cell in cells:
+                if re.match(r'D', cell, flags=re.IGNORECASE):
+                    if 'CELL' in transfer_id.keys():
+                        transfer_id['CELL'] += int(re.findall("\d+", cell)[0])
+                    else:
+                        transfer_id['CELL'] = int(re.findall("\d+", cell)[0])
+    distribution_ID = distributions.keys()
+    rmc_distribution = []
+    rmc_source = []
+    for id in distribution_ID:
+        cell = False
+        pos = False
+        if transfer_id:
+            if 'CELL' in transfer_id.keys():
+                cell_id = [transfer_id['CELL']]
+                if id in cell_id:
+                    cell = True
+            if 'POS' in transfer_id.keys():
+                pos_id = [transfer_id['POS']]
+                if id in pos_id:
+                    pos = True
+        distribution_value = distributions[id]
+        type = None
+        type_value = []
+        probability_value = []
+        bias_value = []
+        depend_id = None
+        if "SI" in distribution_value:
+            si_value = distribution_value['SI']
+            if cell:
+                type_value = postprocess(si_value, R_universes)
+                type = 3
+            si_option = None
+            for value in si_value:
+                if value.isalpha():
+                    si_option = value
+                else:
+                    if not cell:
+                        type_value.append(value)
+            if si_option == None:
+                si_option = 'H'
+                type = 4
+        if "SP" in distribution_value:
+            sp_value = distribution_value['SP']
+            sp_option = None
+            for value in sp_value:
+                if value.isalpha():
+                    sp_option = value
+                else:
+                    if int(value) < 0:
+                        type = function_transfer[value]
+                    else:
+                        probability_value.append(float(value))
+            if sp_option == None:
+                sp_option = 'D'
+        if "SB" in distribution_value:
+            sb_value = distribution_value['SB']
+            sb_option = None
+            for value in sb_value:
+                if value.isalpha():
+                    sb_option = value
+                else:
+                    bias_value.append(value)
+            if sb_option == None:
+                sb_option = 'D'
+        if "DS" in distribution_value:
+            ds_value = distribution_value['DS']
+            ds_option = None
+            depend_id = '1'
+            type = 0
+            for value in ds_value:
+                if value.isalpha():
+                    ds_option = value
+                else:
+                    type_value.append(int(value))
+        rmc_distribution.append(Distribution(id=id, depend=depend_id, type=type, value=type_value, probability=probability_value, bias=bias_value))
+    for pos, source in enumerate(sources):
+        cell_value = None
+        fraction_value = None
+        partilce_value = [1]
+        point_value = None
+        sphere_value = None
+        cyl_x_value = None
+        cyl_y_value = None
+        cyl_z_value = None
+        surface_value = None
+        x_value = None
+        y_value = None
+        z_value = None
+        position_value = None
+        radius_value = None
+        axis_value = None
+        polar_value = None
+        polartheta_value = None
+        extent_value = None
+        height_value = None
+        norm_value = None
+        vector_value = None
+        direcmiu_value = None
+        faivector_value = None
+        direcfai_value = None
+        energy_value = None
+        sampeff_value = None
+        biasfrac_value = None
+        weight_value = None
+        transform_value = None
+        if source.cell is not None:
+            cell_value = source.cell
+        if source.pos is not None:
+            position_value = source.pos
+        if source._x is not None:
+            if re.search(r'F', source._x[0]):
+                x_value = [source._x[1]]
+            else:
+                x_value = source._x
+        if source._y is not None:
+            if re.search(r'F', source._y[0]):
+                y_value = [source._y[1]]
+            else:
+                y_value = source._y
+        if source._z is not None:
+            if re.search(r'F', source._z[0]):
+                z_value = [source._z[1]]
+            else:
+                z_value = source._z
+        if source._sur is not None:
+            surface_value = source._sur
+        if source._erg is not None:
+            energy_value = source._erg
+        if source._dir is not None:
+            direcmiu_value = source._dir
+        if source._vec is not None:
+            vector_value = source._vec
+        if source._nrm is not None:
+            norm_value = source._nrm
+        if source._rad is not None:
+            radius_value = source._rad
+        if source._ext is not None:
+            extent_value = source._ext
+        if source._axs is not None:
+            axis_value = source._axs
+        if source._wgt is not None:
+            weight_value = source._wgt
+        if source._tr is not None:
+            transform_value = source._tr
+        if source._eff is not None:
+            sampeff_value = source._eff
+        if source._par is not None:
+            partilce_value = [source._par]
+        rmc_source.append(Source(source_id=pos+1, fraction=fraction_value, particle=partilce_value, point=point_value, sphere=sphere_value, cyl_x=cyl_x_value, cyl_y=cyl_y_value,
+                 cyl_z=cyl_z_value, surface=surface_value, x=x_value, y=y_value, z=z_value, position=position_value, radius=radius_value, axis=axis_value, polar=polar_value,
+                 polartheta=polartheta_value, extent=extent_value, height=height_value, norm=norm_value, vector=vector_value, direcmiu=direcmiu_value, faivector=faivector_value,
+                 direcfai=direcfai_value, energy=energy_value, cell=cell_value, sampeff=sampeff_value, biasfrac=biasfrac_value, weight=weight_value, transform=transform_value))
+    return [rmc_distribution, rmc_source]
+
+
+def Combine_distrtibution(source_distribution):
+    distributions = {}
+    for distribution in source_distribution:
+        inner_dict = {}
+        if distribution.SP is not None:
+            if int(distribution.SP[0]) in distributions.keys():
+                inner_dict['SP'] = distribution.SP[1:len(distribution.SP)]
+                distributions[int(distribution.SP[0])].update(inner_dict)
+            else:
+                inner_dict['SP'] = distribution.SP[1:len(distribution.SP)]
+                distributions[int(distribution.SP[0])] = inner_dict
+        if distribution.SI is not None:
+            if int(distribution.SI[0]) in distributions.keys():
+                inner_dict['SI'] = distribution.SI[1:len(distribution.SI)]
+                distributions[int(distribution.SI[0])].update(inner_dict)
+            else:
+                inner_dict['SI'] = distribution.SI[1:len(distribution.SI)]
+                distributions[int(distribution.SI[0])] = inner_dict
+        if distribution.SC is not None:
+            if int(distribution.SC[0]) in distributions.keys():
+                inner_dict['SC'] = distribution.SC[1:len(distribution.SC)]
+                distributions[int(distribution.SC[0])].update(inner_dict)
+            else:
+                inner_dict['SC'] = distribution.SC[1:len(distribution.SC)]
+                distributions[int(distribution.SC[0])] = inner_dict
+        if distribution.DS is not None:
+            if int(distribution.DS[0]) in distributions.keys():
+                inner_dict['DS'] = distribution.DS[1:len(distribution.DS)]
+                distributions[int(distribution.DS[0])].update(inner_dict)
+            else:
+                inner_dict['DS'] = distribution.DS[1:len(distribution.DS)]
+                distributions[int(distribution.DS[0])] = inner_dict
+    return distributions
+
+def postprocess(value, R_universes=None):
+    """
+    兼容MCNP风格的通用源Cell输入，即采用三点坐标表示lattice位置，如2 > (2 1 1)> > 6，并将其改为
+    RMC风格的通用源输入，即使用数字序号表示lattice文职，如2 > 3 > 6 (2*2 lattice)
+    """
+    if not value:
+        return
+    value_str = ' '.join([str(int(x)) if Distribution.is_integral(x) else str(x) for x in value])
+
+    if not re.search(r':|\(|\)', value_str):
+        return
+    # get all the cell expansion with (), for example:
+    # expansion: 21 > 5>6>60 2 > ( 2  1 1)>( 2 3 4 ) >  6  2 > (1 1 1)>( 2 3 5)> 66
+    # get [2 > ( 2  1 1)>( 2 3 4 ) >  6, 2 > (1 1 1)>( 2 3 5)> 66]
+    # cell_compile = re.compile(r'\d+\s*:\s*\d+\s*\(\s*-?\d+\s*-?\d+\s*-?\d+\s*\)\s*:\s*\d+')
+    cell_compile = re.compile(r'\d+\s*:(?:\s*\d+\s*\(\s*-?\d+\s*-?\d+\s*-?\d+\s*\)\s*:)*\s*\d+')
+    cell_list = re.findall(cell_compile, value_str)
+    # replace the expansion using the lattice index
+
+    post_value = []
+    cell_dict = {}
+    univ_dict = {}
+    for univ in R_universes:
+        univ_dict[univ.number] = univ
+        for cell in univ.cells:
+            cell_dict[cell.number] = cell
+    for expansion in cell_list:
+        process_cell_expansion(expansion=expansion, univ_dict=univ_dict, cell_dict=cell_dict, value=post_value)
+    value = post_value
+    return value
+
+
+def process_cell_expansion(expansion=None, univ_dict=None, cell_dict=None, value=None):
+    """
+    将MCNP风格的栅元展开式，修改为RMC风格的栅元展开式
+    """
+    if not re.search(r'\(|\)', expansion):
+        return
+    # split the single expansion, ['2', ' 2  1 1', ' 2 3 4 ', ' 6']
+    cell_expansion = [x for x in re.split(r':|\(|\)', expansion) if x != ' ']
+    scope = []
+    fill = []
+    while cell_expansion:
+        cell_lattice = re.findall(r'-?\d+', cell_expansion[0])
+
+        if len(cell_lattice) == 1:
+            cell = cell_dict[int(cell_lattice[0])]
+            # for the bottom cell without filling
+            if cell.fill is None:
+                if int(cell_lattice[0]) == int(re.findall(r'-?\d+', cell_expansion[-1])[0]):
+                    value.append(int(cell_lattice[0]))
+                del cell_expansion[0]
+                continue
+            else:
+                # for cell with filling
+                fill_universe = univ_dict[cell.fill]
+                # for universe with lattice, get lattice scope
+                if fill_universe.lattice is not None:
+                    scope = fill_universe.lattice.scope
+                    fill = fill_universe.lattice.fill
+
+                value.append(int(cell_lattice[0]))
+                value.append('>')
+                del cell_expansion[0]
+
+        elif len(cell_lattice) == 3:
+            if int(cell_lattice[0]) < 0:
+                x = abs(int(cell_lattice[0])) + 1
+            else:
+                x = 2 * int(cell_lattice[0]) + 1
+            if int(cell_lattice[1]) < 0:
+                y = abs(int(cell_lattice[1])) + 1
+            else:
+                y = 2 * int(cell_lattice[1]) + 1
+            if int(cell_lattice[2]) < 0:
+                z = abs(int(cell_lattice[2])) + 1
+            else:
+                z = 2 * int(cell_lattice[2]) + 1
+
+
+            lattice_index = x + scope[0] * (y - 1) + scope[0] * scope[1] * (z - 1)
+
+            universe_id = fill[lattice_index - 1]
+            fill_universe = univ_dict[universe_id]
+            if fill_universe.lattice is not None:
+                scope = fill_universe.lattice.scope
+                fill = fill_universe.lattice.fill
+
+            value.append(lattice_index)
+            value.append('>')
+            del cell_expansion[0]
+
+
+

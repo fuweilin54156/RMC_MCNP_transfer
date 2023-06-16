@@ -39,6 +39,7 @@ class Model(YMLModelObject):
                 'geometry': None,
                 'surface': None,
                 'materials': None,
+                'externalsource': None,
                 'unparsed': None
             }
         self.model = model

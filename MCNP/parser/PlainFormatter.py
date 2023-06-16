@@ -39,6 +39,13 @@ class PlainFormatter:
             changed_inp = re.sub(r'(?P<char>[0-9\)\+\-\.\(\)])\(', '\g<char> (', changed_inp)
             changed_inp = re.sub(r'\((?P<char>[0-9\)\+\-\.\(\)])', '( \g<char>', changed_inp)
             changed_inp = re.sub(r'(?P<char>[0-9\)\+\-\.\(\)])\)', '\g<char> )', changed_inp)
+            changed_inp = re.sub(r'D(\d+)', r'D \g<1>', changed_inp)
+            changed_inp = re.sub(r'd(\d+)', r'd \g<1>', changed_inp)
+            changed_inp = re.sub(r'sp(\d+)', r'sp \g<1>', changed_inp, flags=re.IGNORECASE)
+            changed_inp = re.sub(r'si(\d+)', r'si \g<1>', changed_inp, flags=re.IGNORECASE)
+            changed_inp = re.sub(r'sb(\d+)', r'sb \g<1>', changed_inp, flags=re.IGNORECASE)
+            changed_inp = re.sub(r'ds(\d+)', r'ds \g<1>', changed_inp, flags=re.IGNORECASE)
+            changed_inp = re.sub(r'sc(\d+)', r'sc \g<1>', changed_inp, flags=re.IGNORECASE)
 
             changed_inp = changed_inp.replace('  ', ' ')
             changed_inp = changed_inp.replace('\n\n\n', '\n\n')
