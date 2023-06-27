@@ -388,6 +388,7 @@ class PlainParser:
     def __parse_criticality(content):
         couple = None
         power_iter = None
+        initsrc = None
         unparsed = ''
         for option in content:
             if option.split()[0].upper() == 'COUPLE':
@@ -396,9 +397,12 @@ class PlainParser:
             elif option.split()[0].upper() == 'POWERITER':
                 power_iter = PlainParser._parse_options(option.split(' ', 1)[1],
                                                         Criticality.card_option_types["POWERITER"])
+            elif option.split()[0].upper() == 'INITSRC':
+                initsrc = PlainParser._parse_options(option.split(' ', 1)[1],
+                                                        Criticality.card_option_types["INITSRC"])
             else:
                 unparsed += option + '\n'
-        return Criticality(couple=couple, power_iter=power_iter, unparsed=unparsed)
+        return Criticality(couple=couple, power_iter=power_iter, initsrc=initsrc, unparsed=unparsed)
 
     @staticmethod
     def __parse_criticalitysearch(content):

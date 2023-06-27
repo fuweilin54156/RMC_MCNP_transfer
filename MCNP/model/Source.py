@@ -65,7 +65,7 @@ class Source(BaseModel):
             'ARA': [float],
             'WGT': [float],
             'EFF': [float],
-            'PAR': ['list', str],
+            'PAR': ['list', int],
             'TR': ['list', int],
         }
 
@@ -174,7 +174,7 @@ class Source(BaseModel):
         if self._ara is not None:
             card += ' ARA = ' + ' '.join([str(x) for x in self._ara])
         if self._wgt is not None:
-            card += ' WGT = ' + ' '.join([str(x) for x in self._wgt])
+            card += ' WGT = ' +  str(self._wgt)
         if self._eff is not None:
             card += ' EFF = ' + ' '.join([str(x) for x in self._eff])
         if self._par is not None:
@@ -257,28 +257,23 @@ class Distribution(BaseModel):
         card = ''
         if self._SI:
             card += 'SI'
-            for si in self._SI:
-                card += ' '.join([str(x) for x in si])
-                card += '\n'
+            card += ' '.join([str(x) for x in self._SI])
+            card += '\n'
         if self._SP:
             card += 'SP'
-            for sp in self._SP:
-                card += ' '.join([str(x) for x in sp])
-                card += '\n'
+            card += ' '.join([str(x) for x in self._SP])
+            card += '\n'
         if self._SB:
             card += 'SB'
-            for sb in self._SB:
-                card += ' '.join([str(x) for x in sb])
-                card += '\n'
+            card += ' '.join([str(x) for x in self._SB])
+            card += '\n'
         if self._DS:
             card += 'DS'
-            for ds in self._DS:
-                card += ' '.join([str(x) for x in ds])
-                card += '\n'
+            card += ' '.join([str(x) for x in self._DS])
+            card += '\n'
         if self._SC:
             card += 'SC'
-            for sc in self._SC:
-                card += ' '.join([str(x) for x in sc])
-                card += '\n'
+            card += ' '.join([str(x) for x in self._SC])
+            card += '\n'
         return card
 

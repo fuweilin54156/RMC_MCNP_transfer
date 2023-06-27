@@ -167,25 +167,41 @@ def transfer(inp_MCNP):
     R_geometry_model = RMCGeometry.Geometry(universes=R_universes)
     test3 = str(R_geometry_model)
 
-    # source_list = []
-    Combined_distribution = Combine_distrtibution(M_model.model['externalsource'].distributions)
-    h5source = None
-    surfsrcread_list = []
-    unparsed = ''
-    [RMC_Distribution, RMC_source] = Transfer_source(Combined_distribution, M_model.model['externalsource'].source, R_universes)
-    R_externalsource = ExternalSource(source=RMC_source, surfsrcread=surfsrcread_list, distributions=RMC_Distribution,
-                                      h5source=h5source, unparsed=unparsed)
+    if M_model.model['externalsource'] is not None:
+        Combined_distribution = Combine_distrtibution(M_model.model['externalsource'].distributions)
+        h5source = None
+        surfsrcread_list = []
+        unparsed = ''
+        [RMC_Distribution, RMC_source] = Transfer_source(Combined_distribution, M_model.model['externalsource'].source, R_universes)
+        R_externalsource = ExternalSource(source=RMC_source, surfsrcread=surfsrcread_list, distributions=RMC_Distribution,
+                                          h5source=h5source, unparsed=unparsed)
+        R_model.model['externalsource'] = R_externalsource
+
+    if M_model.model['critical'] is not None:
+        power_iter = None
+        initsrc = None
+        if len(M_model.model['critical'].kcode) > 0:
+            kcode_option = M_model.model['critical'].kcode['KCODE']
+            power_iter = {"KEFF0": kcode_option[1], "POPULATION": [kcode_option[0], kcode_option[2], kcode_option[3]], "BATCHNUM": 1}
+        if len(M_model.model['critical'].ksrc) > 0:
+            ksrc_option = M_model.model['critical'].ksrc['KSRC']
+            initsrc = {"POINT": ksrc_option}
+        if M_model.model['externalsource'] is not None:
+            initsrc = {"EXTERNALSOURCE": RMC_source[0]._id}
+        R_model.model['criticality'] = RMCCriticality.Criticality(power_iter=power_iter, initsrc=initsrc)
+
+
     # combine RMC model
     R_model.model['geometry'] = R_geometry_model
     R_model.model['surface'] = R_surfaces_model
     R_model.model['macrobody'] = R_macrobodys_model
     R_model.model['material'] = R_materials_model
-    R_model.model['externalsource'] = R_externalsource
+
 
     # set the Criticality block
-    power_iter = {"KEFF0": 1, "POPULATION": [10000, 50, 300], "BATCHNUM": 1}
-    R_model.model['criticality'] = RMCCriticality.Criticality(power_iter=power_iter,
-                                                              unparsed='InitSrc point = 0 0 0')
+    # power_iter = {"KEFF0": 1, "POPULATION": [10000, 50, 300], "BATCHNUM": 1}
+    # R_model.model['criticality'] = RMCCriticality.Criticality(power_iter=power_iter,
+    #                                                           unparsed='InitSrc point = 0 0 0')
     R_model.model[
         'plot'] = 'PLOT Continue-calculation = 1\n' \
                   'PlotID 1 Type = slice Color = cell Pixels=10000 10000 Vertexes=-100 -100 0 100 100 0\n' \
@@ -299,7 +315,7 @@ def Transfer_source(distributions, sources, R_universes):
         if source.pos:
             Pos = source.pos
             for pos in Pos:
-                if re.match(r'D', pos, flags=re.IGNORECASE):
+                if re.match(r'D', str(pos), flags=re.IGNORECASE):
                     if 'POS' in transfer_id.keys():
                         transfer_id['POS'] += int(re.findall("\d+", pos)[0])
                     else:
@@ -307,7 +323,7 @@ def Transfer_source(distributions, sources, R_universes):
         if source.cell:
             cells = source.cell
             for cell in cells:
-                if re.match(r'D', cell, flags=re.IGNORECASE):
+                if re.match(r'D', str(cell), flags=re.IGNORECASE):
                     if 'CELL' in transfer_id.keys():
                         transfer_id['CELL'] += int(re.findall("\d+", cell)[0])
                     else:
@@ -334,6 +350,14 @@ def Transfer_source(distributions, sources, R_universes):
         bias_value = []
         depend_id = None
         if "SI" in distribution_value:
+            for source in sources:
+                if source._rad is not None or source._ext is not None:
+                    if re.match(r'D\d+', source._rad[0], flags=re.I) or re.match(r'D\d+', source._ext[0], flags=re.I):
+                        dis_id = int(list(source._rad[0])[1])
+                        if dis_id == id and "SP" not in distribution_value:
+                            type = function_transfer['-21']
+                            probability_value.append(2)
+                            type_value.append(0)
             si_value = distribution_value['SI']
             if cell:
                 type_value = postprocess(si_value, R_universes)
@@ -355,7 +379,7 @@ def Transfer_source(distributions, sources, R_universes):
                 if value.isalpha():
                     sp_option = value
                 else:
-                    if int(value) < 0:
+                    if float(value) < 0:
                         type = function_transfer[value]
                     else:
                         probability_value.append(float(value))
@@ -454,7 +478,7 @@ def Transfer_source(distributions, sources, R_universes):
         if source._eff is not None:
             sampeff_value = source._eff
         if source._par is not None:
-            partilce_value = [source._par]
+            partilce_value = source._par
         rmc_source.append(Source(source_id=pos+1, fraction=fraction_value, particle=partilce_value, point=point_value, sphere=sphere_value, cyl_x=cyl_x_value, cyl_y=cyl_y_value,
                  cyl_z=cyl_z_value, surface=surface_value, x=x_value, y=y_value, z=z_value, position=position_value, radius=radius_value, axis=axis_value, polar=polar_value,
                  polartheta=polartheta_value, extent=extent_value, height=height_value, norm=norm_value, vector=vector_value, direcmiu=direcmiu_value, faivector=faivector_value,

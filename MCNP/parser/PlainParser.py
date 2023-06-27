@@ -9,6 +9,7 @@ from MCNP.model.base import Model as InputModel
 from MCNP.model.Geometry import *
 from MCNP.model.Material import *
 from MCNP.model.Source import *
+from MCNP.model.Critically import *
 
 
 class PlainParser:
@@ -80,16 +81,22 @@ class PlainParser:
                                 surface.tr.rotate = tr_model[i].rotate
 
             # process SDEF card
-            sdef_card = other_cards[3]
-            sdef_model = self.__parse_sdef(sdef_card)
+            if len(other_cards[3]) > 0:
+                sdef_card = other_cards[3]
+                sdef_model = self.__parse_sdef(sdef_card)
+                self.parsed_model.model['externalsource'] = sdef_model
 
-            self.parsed_model.model['unparsed'] = other_cards[4]
+            if len(other_cards[4]) > 0:
+                critical_card = other_cards[4]
+                critical_model = self.__parse_critical(critical_card)
+                self.parsed_model.model['critical'] = critical_model
+
+            self.parsed_model.model['unparsed'] = other_cards[5]
 
 
 
         self.parsed_model.model['surface'] = surface_model
         self.parsed_model.model['geometry'] = geometry_model
-        self.parsed_model.model['externalsource'] = sdef_model
 
         self.parsed_model.postprocess()
         return self.parsed_model
@@ -122,6 +129,7 @@ class PlainParser:
         imp_lines = []
         trcl_lines = []
         sdef_lines = []
+        critical_lines = []
         un_parsed = []
         for line in lines:
             words = line.split(' ')
@@ -143,9 +151,13 @@ class PlainParser:
                 sdef_lines.append(line)
             elif re.match(r'DS', words[0], re.I):
                 sdef_lines.append(line)
+            elif re.match(r'KCODE', words[0], re.I):
+                critical_lines.append(line)
+            elif re.match(r'KSRC', words[0], re.I):
+                critical_lines.append(line)
             else:
                 un_parsed.append(line)
-        return [mat_lines, imp_lines, trcl_lines, sdef_lines, un_parsed]
+        return [mat_lines, imp_lines, trcl_lines, sdef_lines, critical_lines, un_parsed]
 
     @staticmethod
     def __parse_material(content):
@@ -371,6 +383,15 @@ class PlainParser:
         distribution_list = []
         unparsed = ''
         for option in content:
+            new_option = []
+            for value in option.split(' '):
+                if re.match(r'D\d+', value, flags=re.I):
+                    value_list = list(value)
+                    for final_value in value_list:
+                        new_option.append(final_value)
+                else:
+                    new_option.append(value)
+            option = ' '.join([str(x) for x in new_option])
             if option.split()[0].upper() == 'SDEF':
                 source = Source()
                 opt_lst = PlainParser._parse_multioption(option.split(' ', 1)[1], Source.card_option_types)
@@ -399,6 +420,20 @@ class PlainParser:
             else:
                 unparsed += option
         return ExternalSource(source=source_list, distributions=distribution_list, unparsed=unparsed)
+
+    @staticmethod
+    def __parse_critical(content):
+        kcode_list = []
+        ksrc_list = []
+        unparsed = ''
+        for option in content:
+            if option.split()[0].upper() == 'KCODE':
+                kcode_list = PlainParser._parse_multioption(option, Criticality.card_option_types)
+            elif option.split()[0].upper() == 'KSRC':
+                ksrc_list = PlainParser._parse_multioption(option, Criticality.card_option_types)
+            else:
+                unparsed += option
+        return Criticality(kcode=kcode_list, ksrc=ksrc_list, unparsed=unparsed)
 
     @staticmethod
     def _parse_option(content, cards):
@@ -510,6 +545,7 @@ class PlainParser:
             elif re.fullmatch(r'FCEL', options[index].upper()):
                 option = options[index]
                 opt_list.append(option)
+                opt_list.append('=')
                 index += 1
             else:
                 try:

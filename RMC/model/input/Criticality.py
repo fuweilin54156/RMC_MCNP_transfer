@@ -15,10 +15,19 @@ class Criticality(BaseModel):
         'COUPLE': {
             'MAXITERATION': [int],
             'VARY_CYCLE': ['list', int, -1],
+        },
+        'INITSRC': {
+            'POINT': ['list', float],
+            'SLAB': ['list', float],
+            'SPH': ['list', float],
+            'CLY/X': ['list', float],
+            'CYL/Y': ['list', float],
+            'CYL/Z': ['list', float],
+            'EXTERNALSOURCE': [int],
         }
     }
 
-    def __init__(self, couple=None, power_iter=None, unparsed=''):
+    def __init__(self, couple=None, power_iter=None, initsrc=None, unparsed=''):
         if couple is not None:
             self._max_iteration = couple["MAXITERATION"] if 'MAXITERATION' in couple else None
             self.vary_cycle = couple["VARY_CYCLE"] if 'VARY_CYCLE' in couple else None
@@ -31,6 +40,9 @@ class Criticality(BaseModel):
             self.batch_num = power_iter["BATCHNUM"] if 'BATCHNUM' in power_iter else None
         else:
             raise ValueError("PowerIter option in CRITICALITY card is required.")
+        if initsrc is not None:
+            self.initsrctype = list(initsrc.keys())[0]
+            self.params = initsrc[self.initsrctype]
 
         self._unparsed = unparsed
 
@@ -59,9 +71,17 @@ class Criticality(BaseModel):
         if self.keff0 is not None:
             card += f' keff0 = {self.keff0}'
         if self.population is not None:
-            card += f' population = {self.population[0]} {self.population[1]} {self.population[2]}'
+            card += f' population = {int(self.population[0])} {int(self.population[1])} {int(self.population[2])}'
         if self.batch_num is not None:
             card += f' Batchnum = {self.batch_num}'
+        card += '\n'
+        card += 'InitSrc'
+        if self.initsrctype is not None:
+            card += f' {self.initsrctype} = '
+            if isinstance(self.params,list):
+                card += ' '.join([str(x) for x in self.params])
+            else:
+                card += str(self.params)
         card += '\n'
         if self._unparsed != '':
             card += self._unparsed
