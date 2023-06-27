@@ -24,7 +24,7 @@ print('-------------------------------------------------------------------------
       "               M  M  M       22       RR RR  \n"
       "               M     R     222222     RR   R \n\n"
       "MCNP to RMC transformation tool V2.0 \nAuthor: Shen Pengfei, Gou Yuanhao\n"
-      "Email:2043965149@qq.com\n"
+      "Email: 2043965149@qq.com\n"
       '-------------------------------------------------------------------------\n')
 # M2R.transfer('fq-HZP-MCNP')
 # files = ['0'+str(i+1) for i in range(8)]
@@ -34,7 +34,7 @@ print('-------------------------------------------------------------------------
 filename = input(
     "Please input the filename: \nnote: '*' and '?' can be used once. " 
     "\n('*' can replace any char in any length; '?' can replace any single char)\n>> ")
-print("You have input : " + filename + '\n')
+# print("You have input : " + filename + '\n')
 reg = filename.replace('?', '.')
 reg = reg.replace('*', '.*')
 

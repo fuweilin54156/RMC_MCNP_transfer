@@ -211,7 +211,7 @@ def transfer(inp_MCNP):
     with open(inp_MCNP + '_parsed_RMC_model', 'w+') as f:
         f.write(str(R_model))
 
-    print('file: [' + inp_MCNP + '] have been processed!')
+    print('file: [' + inp_MCNP + '] have been processed!\n')
 
 
 def transfer_lat1(cell, R_surfaces, R_macrobodys):
