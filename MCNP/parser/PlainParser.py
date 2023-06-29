@@ -31,69 +31,97 @@ class PlainParser:
             return self.parsed_model
         self._read_in()
 
+        self.parsed_model.model['unparsed'] = []
+
         geometry_card = self.content[0].split('\n')
         surface_card = self.content[1].split('\n')
 
-        [cells, geom_unparsed] = self.__parse_geometry(geometry_card)
-        geometry_model = Geometry(cells=cells, unparsed=geom_unparsed)
-        surface_model = self.__parse_surface_macrobody(surface_card)
+        try:
+            [cells, geom_unparsed] = self.__parse_geometry(geometry_card)
+            geometry_model = Geometry(cells=cells, unparsed=geom_unparsed)
+        except:
+            print(" Error: failed to parse the MCNP geometry block")
+
+        try:
+            surface_model = self.__parse_surface_macrobody(surface_card)
+        except:
+            print(" Error: failed to parse the MCNP Surface block")
 
         if len(self.content) > 1:
             other_card = self.content[2]
             other_cards = self.split_othercard(other_card)
             # process MAT card
-            mat_card = other_cards[0]
-            material_model = self.__parse_material(mat_card)
-            self.parsed_model.model['materials'] = material_model
+            try:
+                mat_card = other_cards[0]
+                material_model = self.__parse_material(mat_card)
+                self.parsed_model.model['materials'] = material_model
+            except:
+                print(" Error: failed to parse the MCNP Material block")
+                self.parsed_model.model['unparsed'] += other_cards[0]
 
             # process IMP card
-            imp_card = other_cards[1]
-            imp_dict = self.__parse_importance(imp_card)
-            if 'IMP:N' in imp_dict:
-                imp_n_list = imp_dict['IMP:N']
-                for i in range(len(geometry_model.cells)):
-                    geometry_model.cells[i].impn = imp_n_list[i]
-            if 'IMP:P' in imp_dict:
-                imp_p_list = imp_dict['IMP:P']
-                for i in range(len(geometry_model.cells)):
-                    geometry_model.cells[i].impp = imp_p_list[i]
-            if 'IMP:E' in imp_dict:
-                imp_e_list = imp_dict['IMP:E']
-                for i in range(len(geometry_model.cells)):
-                    geometry_model.cells[i].impn = imp_e_list[i]
+            try:
+                imp_card = other_cards[1]
+                imp_dict = self.__parse_importance(imp_card)
+                if 'IMP:N' in imp_dict:
+                    imp_n_list = imp_dict['IMP:N']
+                    for i in range(len(geometry_model.cells)):
+                        geometry_model.cells[i].impn = imp_n_list[i]
+                if 'IMP:P' in imp_dict:
+                    imp_p_list = imp_dict['IMP:P']
+                    for i in range(len(geometry_model.cells)):
+                        geometry_model.cells[i].impp = imp_p_list[i]
+                if 'IMP:E' in imp_dict:
+                    imp_e_list = imp_dict['IMP:E']
+                    for i in range(len(geometry_model.cells)):
+                        geometry_model.cells[i].impn = imp_e_list[i]
+            except:
+                print(" Error: failed to parse the MCNP importance definition block")
+                self.parsed_model.model['unparsed'] += other_cards[1]
 
             # process TR card
-            tr_card = other_cards[2]
-            tr_model = self.__parse_tr(tr_card)
-            for cell in geometry_model.cells:
-                if cell.trcl is not None:
-                    if cell.trcl.num is not None:
-                        for i in range(len(tr_model)):
-                            if tr_model[i].num == cell.trcl.num:
-                                cell.trcl.move = tr_model[i].move
-                                cell.trcl.rotate = tr_model[i].rotate
-            for surface in surface_model.surfaces:
-                if surface.tr is not None:
-                    if surface.tr.num is not None:
-                        for i in range(len(tr_model)):
-                            if tr_model[i].num == surface.tr.num:
-                                surface.tr.move = tr_model[i].move
-                                surface.tr.rotate = tr_model[i].rotate
+            try:
+                tr_card = other_cards[2]
+                tr_model = self.__parse_tr(tr_card)
+                for cell in geometry_model.cells:
+                    if cell.trcl is not None:
+                        if cell.trcl.num is not None:
+                            for i in range(len(tr_model)):
+                                if tr_model[i].num == cell.trcl.num:
+                                    cell.trcl.move = tr_model[i].move
+                                    cell.trcl.rotate = tr_model[i].rotate
+                for surface in surface_model.surfaces:
+                    if surface.tr is not None:
+                        if surface.tr.num is not None:
+                            for i in range(len(tr_model)):
+                                if tr_model[i].num == surface.tr.num:
+                                    surface.tr.move = tr_model[i].move
+                                    surface.tr.rotate = tr_model[i].rotate
+            except:
+                print(" Error: failed to parse the MCNP TR or TRCL card")
+                self.parsed_model.model['unparsed'] += other_cards[2]
 
             # process SDEF card
-            if len(other_cards[3]) > 0:
-                sdef_card = other_cards[3]
-                sdef_model = self.__parse_sdef(sdef_card)
-                self.parsed_model.model['externalsource'] = sdef_model
+            try:
+                if len(other_cards[3]) > 0:
+                    sdef_card = other_cards[3]
+                    sdef_model = self.__parse_sdef(sdef_card)
+                    self.parsed_model.model['externalsource'] = sdef_model
+            except:
+                print(" Error: failed to parse the MCNP Source Definition block")
+                self.parsed_model.model['unparsed'] += other_cards[3]
 
-            if len(other_cards[4]) > 0:
-                critical_card = other_cards[4]
-                critical_model = self.__parse_critical(critical_card)
-                self.parsed_model.model['critical'] = critical_model
+            # process kcode card
+            try:
+                if len(other_cards[4]) > 0:
+                    critical_card = other_cards[4]
+                    critical_model = self.__parse_critical(critical_card)
+                    self.parsed_model.model['critical'] = critical_model
+            except:
+                print(" Error: failed to parse the MCNP kcode block")
+                self.parsed_model.model['unparsed'] += other_cards[4]
 
-            self.parsed_model.model['unparsed'] = other_cards[5]
-
-
+            self.parsed_model.model['unparsed'] += other_cards[5]
 
         self.parsed_model.model['surface'] = surface_model
         self.parsed_model.model['geometry'] = geometry_model
