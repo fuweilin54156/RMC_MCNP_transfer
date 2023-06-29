@@ -9,6 +9,7 @@ import RMC.model.input.MacroBody as RMCMacrobody
 import RMC.model.input.Criticality as RMCCriticality
 from RMC.model.input.ExternalSource import *
 from RMC.model.input.base import Model as RMCModel
+from RMC.parser.PlainParser import PlainParser as RMCPlainParser
 import MCNP.parser.PlainParser as MCNPParser
 import numpy as np
 import re
@@ -18,7 +19,7 @@ def transfer(inp_MCNP):
     print('Processing file: ' + inp_MCNP + ' ...')
 
     M_model = MCNPParser.PlainParser(inp_MCNP).parsed
-    with open(inp_MCNP + '_parsed_MCNP_model', 'w+') as f:
+    with open(inp_MCNP + '.mcnp', 'w+') as f:
         f.write(str(M_model))
 
     R_model = RMCModel()
@@ -158,6 +159,9 @@ def transfer(inp_MCNP):
             for fill_univ_id in univ.lattice.fill:
                 for univ2 in R_universes:
                     if univ2.number == fill_univ_id:
+                        if univ2.transformation is not None:
+                            if not (univ2.transformation.move == move).all():
+                                print(" Warning: the variables of 'move' in Universe " + str(univ2.number) + " are uncorrected processed!")
                         univ2.transformation = RMCGeometry.Transformation(move=move)
                         break
 
@@ -203,13 +207,20 @@ def transfer(inp_MCNP):
     # R_model.model['criticality'] = RMCCriticality.Criticality(power_iter=power_iter,
     #                                                           unparsed='InitSrc point = 0 0 0')
     R_model.model[
-        'plot'] = 'PLOT Continue-calculation = 1\n' \
+        'plot'] = 'PLOT\n' \
                   'PlotID 1 Type = slice Color = cell Pixels=10000 10000 Vertexes=-100 -100 0 100 100 0\n' \
                   'PlotID 2 type = slice color = cell pixels=10000 10000 vertexes=-100 0 -100 100 0 100'
 
-    # output 2 files
-    with open(inp_MCNP + '_parsed_RMC_model', 'w+') as f:
+    # output 2 files, RMC python file and RMC binary file
+    with open(inp_MCNP + '.rmc.python', 'w+') as f:
         f.write(str(R_model))
+    with open(inp_MCNP + '.rmc.binary', 'w+') as f:
+        R_py_file = inp_MCNP + '.rmc.python'
+        try:
+            R_parserd_model = RMCPlainParser(R_py_file).parsed
+            f.write(str(R_parserd_model))
+        except ValueError:
+            print(" Error: could not generat RMC binary input file.")
 
     print('file: [' + inp_MCNP + '] have been processed!\n')
 
@@ -304,6 +315,12 @@ def transfer_lat1(cell, R_surfaces, R_macrobodys):
     move[0] = pitch[0] * (x_left - 0.5)
     move[1] = pitch[1] * (y_left - 0.5)
     move[2] = pitch[2] * (z_left - 0.5)
+
+    # if the scope is 1, set zero to the pitch and move values
+    for i in range(3):
+        if scope[i] == 1:
+            move[i] = 0
+            pitch[i] = 0
 
     return scope, pitch, fill, move
 

@@ -19,10 +19,10 @@ import os
 import re
 
 print('-------------------------------------------------------------------------\n'
-      "               MM   MM      2222      RRRRR \n"
-      "               M M M M          2     RR   R \n"
-      "               M  M  M       22       RR RR  \n"
-      "               M     R     222222     RR   R \n\n"
+      "                  MM   MM      2222      RRRRR \n"
+      "                  M M M M          2     RR   R \n"
+      "                  M  M  M       22       RR RR  \n"
+      "                  M     R     222222     RR   R \n\n"
       "MCNP to RMC transformation tool V2.0 \nAuthor: Shen Pengfei, Gou Yuanhao\n"
       "Email: 2043965149@qq.com\n"
       '-------------------------------------------------------------------------\n')
@@ -44,7 +44,8 @@ for file in os.listdir(path):
     if re.match(r'^' + reg + '$', file) and len(file) >= len(reg) - 1:
         processed_files.append(file)
 
-print('These files are going to be processed: \n ' + ', '.join(processed_files) + '\n'
+print('\n-------------------------------------------------------------------------\n'
+      'These files are going to be processed: \n ' + ', '.join(processed_files) + '\n'
       '-------------------------------------------------------------------------\n')
 for file in processed_files:
     M2R.transfer(file)
