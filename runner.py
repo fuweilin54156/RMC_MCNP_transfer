@@ -3,6 +3,7 @@
 # date: 2021-07-23
 """
 examples:
+>>> import MCNPtoRMC as M2R
 >>> inp_MCNP = '06'
 >>> M2R.transfer(inp_MCNP)
 
@@ -52,3 +53,5 @@ print('\n-----------------------------------------------------------------------
       '-------------------------------------------------------------------------\n')
 for file in processed_files:
     M2R.transfer(file)
+
+os.system("pause")
