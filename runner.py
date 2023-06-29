@@ -33,7 +33,10 @@ print('-------------------------------------------------------------------------
 
 filename = input(
     "Please input the filename: \nnote: '*' and '?' can be used once. " 
-    "\n('*' can replace any char in any length; '?' can replace any single char)\n>> ")
+    "'*' can replace any char in any length; '?' can replace any single char.\n"
+    "for example: '01?' matches ['011', '01a'] ;\n"
+    "             '01*' matches ['01', '011234567']\n"
+    ">> ")
 # print("You have input : " + filename + '\n')
 reg = filename.replace('?', '.')
 reg = reg.replace('*', '.*')
