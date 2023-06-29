@@ -123,10 +123,13 @@ class PlainParser:
 
             self.parsed_model.model['unparsed'] += other_cards[5]
 
-        self.parsed_model.model['surface'] = surface_model
-        self.parsed_model.model['geometry'] = geometry_model
+        try:
+            self.parsed_model.model['surface'] = surface_model
+            self.parsed_model.model['geometry'] = geometry_model
+            self.parsed_model.postprocess()
+        except:
+            print(" Error: failed to parse the MCNP geometry block")
 
-        self.parsed_model.postprocess()
         return self.parsed_model
 
     @staticmethod

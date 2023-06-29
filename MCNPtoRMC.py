@@ -25,203 +25,236 @@ def transfer(inp_MCNP):
     R_model = RMCModel()
 
     # transfer surface block
-    R_surfaces = []
-    for M_surf in M_model.model['surface'].surfaces:
-        if M_surf.tr is not None:
-            if M_surf.tr.rotate is not None:
-                surf = RMCGeometry.Surface.externalization(number=M_surf.number, type=M_surf.type,
-                                                           parameters=M_surf.parameters,
-                                                           boundary=M_surf.boundary, pair=M_surf.pair,
-                                                           move=M_surf.tr.move,
-                                                           rotate=np.array(M_surf.tr.rotate).reshape([3, 3]))
+    try:
+        R_surfaces = []
+        for M_surf in M_model.model['surface'].surfaces:
+            if M_surf.tr is not None:
+                if M_surf.tr.rotate is not None:
+                    surf = RMCGeometry.Surface.externalization(number=M_surf.number, type=M_surf.type,
+                                                               parameters=M_surf.parameters,
+                                                               boundary=M_surf.boundary, pair=M_surf.pair,
+                                                               move=M_surf.tr.move,
+                                                               rotate=np.array(M_surf.tr.rotate).reshape([3, 3]))
+                else:
+                    surf = RMCGeometry.Surface.externalization(number=M_surf.number, type=M_surf.type,
+                                                               parameters=M_surf.parameters,
+                                                               boundary=M_surf.boundary, pair=M_surf.pair,
+                                                               move=M_surf.tr.move)
+                R_surfaces.append(surf)
             else:
                 surf = RMCGeometry.Surface.externalization(number=M_surf.number, type=M_surf.type,
                                                            parameters=M_surf.parameters,
-                                                           boundary=M_surf.boundary, pair=M_surf.pair,
-                                                           move=M_surf.tr.move)
-            R_surfaces.append(surf)
-        else:
-            surf = RMCGeometry.Surface.externalization(number=M_surf.number, type=M_surf.type,
-                                                       parameters=M_surf.parameters,
-                                                       boundary=M_surf.boundary, pair=M_surf.pair)
-            R_surfaces.append(surf)
+                                                           boundary=M_surf.boundary, pair=M_surf.pair)
+                R_surfaces.append(surf)
 
-    R_surfaces_model = RMCGeometry.Surfaces(surfaces=R_surfaces)
-    test = str(R_surfaces_model)
+        R_surfaces_model = RMCGeometry.Surfaces(surfaces=R_surfaces)
+        if M_model.model['surface'].unparsed is not None and M_model.model['surface'].unparsed != '':
+            print(" Warning: [Surface block] unparsed items: \n" + M_model.model['surface'].unparsed)
+        test = str(R_surfaces_model)
+    except:
+        print(" Error: failed to transfer the MCNP surf block to RMC surf.")
 
     # transfer macrobody block
-    R_macrobodys = []
-    for M_body in M_model.model['surface'].macrobodys:
-        if M_body.tr is not None:
-            if M_body.tr.rotate is not None:
-                body = RMCMacrobody.MacroBody.externalization(number=M_body.body_number, type=M_body.type,
-                                                              parameters=M_body.params, move=M_body.tr.move,
-                                                              rotate=np.array(M_body.tr.rotate).reshape([3, 3]))
+    try:
+        R_macrobodys = []
+        for M_body in M_model.model['surface'].macrobodys:
+            if M_body.unparsed is not None and M_body.unparsed != '':
+                print(" Warning: unparsed items in MCNP macrobody " + M_body.body_number + " : " + M_body.unparsed)
+            if M_body.tr is not None:
+                if M_body.tr.rotate is not None:
+                    body = RMCMacrobody.MacroBody.externalization(number=M_body.body_number, type=M_body.type,
+                                                                  parameters=M_body.params, move=M_body.tr.move,
+                                                                  rotate=np.array(M_body.tr.rotate).reshape([3, 3]))
+                else:
+                    body = RMCMacrobody.MacroBody.externalization(number=M_body.body_number, type=M_body.type,
+                                                                  parameters=M_body.params,
+                                                                  move=M_body.tr.move)
+                R_macrobodys.append(body)
             else:
                 body = RMCMacrobody.MacroBody.externalization(number=M_body.body_number, type=M_body.type,
-                                                              parameters=M_body.params,
-                                                              move=M_body.tr.move)
-            R_macrobodys.append(body)
-        else:
-            body = RMCMacrobody.MacroBody.externalization(number=M_body.body_number, type=M_body.type,
-                                                          parameters=M_body.params)
-            R_macrobodys.append(body)
+                                                              parameters=M_body.params)
+                R_macrobodys.append(body)
 
-    R_macrobodys_model = RMCMacrobody.Macrobodies(macrobodies=R_macrobodys)
-    test = str(R_macrobodys_model)
+        R_macrobodys_model = RMCMacrobody.Macrobodies(macrobodies=R_macrobodys)
+        test = str(R_macrobodys_model)
+    except:
+        print(" Error: failed to transfer the MCNP Macrobody block to RMC Macrobody.")
 
     # transfer material block
-    R_materials = []
-    for cell in M_model.model['geometry'].cells:
-        tmp_mat_id = cell.material
-        if tmp_mat_id == 0:
-            continue
-        for index in range(len(M_model.model['materials'].mats)):
-            if M_model.model['materials'].mats[index].mat_id == tmp_mat_id:
-                M_model.model['materials'].mats[index].densities.append(cell.density)
+    try:
+        R_materials = []
+        for cell in M_model.model['geometry'].cells:
+            tmp_mat_id = cell.material
+            if tmp_mat_id == 0:
+                continue
+            for index in range(len(M_model.model['materials'].mats)):
+                if M_model.model['materials'].mats[index].mat_id == tmp_mat_id:
+                    M_model.model['materials'].mats[index].densities.append(cell.density)
 
-    duplicate_mats = []
-    for mat in M_model.model['materials'].mats:
-        if mat.densities and len(set(mat.densities)) == 1:
-            R_mat = RMCMat.Material(mat_id=mat.mat_id, density=mat.densities[0], nuclides=mat.nuclides)
-            R_materials.append(R_mat)
-        elif len(set(mat.densities)) > 1:
-            duplicate_mats.append(mat.mat_id)
-            R_mat = RMCMat.Material(mat_id=mat.mat_id, density=mat.densities[0], nuclides=mat.nuclides)
-            R_materials.append(R_mat)
-    if duplicate_mats:
-        print(' Warning: find duplicated mat densities, id:' + str(duplicate_mats))
+        duplicate_mats = []
+        for mat in M_model.model['materials'].mats:
+            if mat.densities and len(set(mat.densities)) == 1:
+                R_mat = RMCMat.Material(mat_id=mat.mat_id, density=mat.densities[0], nuclides=mat.nuclides)
+                R_materials.append(R_mat)
+            elif len(set(mat.densities)) > 1:
+                duplicate_mats.append(mat.mat_id)
+                R_mat = RMCMat.Material(mat_id=mat.mat_id, density=mat.densities[0], nuclides=mat.nuclides)
+                R_materials.append(R_mat)
+        if duplicate_mats:
+            print(' Warning: find duplicated mat densities, id:' + str(duplicate_mats))
+        if M_model.model['materials']._unparsed is not None and M_model.model['materials']._unparsed != '':
+            print(" Warning: unparsed items in MCNP materials : " + M_model.model['materials']._unparsed)
 
-    R_sabs = ''
-    for mt in M_model.model['materials'].mts:
-        R_sabs += 'sab ' + str(mt.id) + ' ' + mt.name + '\n'
+        R_sabs = ''
+        for mt in M_model.model['materials'].mts:
+            R_sabs += 'sab ' + str(mt.id) + ' ' + mt.name + '\n'
 
-    R_materials_model = RMCMat.Materials(mats=R_materials, unparsed=R_sabs)
-    test2 = str(R_materials_model)
+        R_materials_model = RMCMat.Materials(mats=R_materials, unparsed=R_sabs)
+        test2 = str(R_materials_model)
+    except:
+        print(" Error: failed to transfer the MCNP Material block to RMC Material.")
 
     # transfer geometry block
-    R_cells = []
-    R_universes = []
-    R_universes_ids = []
-    for cell in M_model.model['geometry'].cells:
-        out_universe_id = 0
-        if cell.universe:
-            out_universe_id = cell.universe
-        if cell.trcl is not None and cell.lat is None:
-            R_cell = RMCGeometry.Cell(number=cell.number, bounds=cell.bounds.replace('#', '!'),
-                                      material=[cell.material],
-                                      fill=cell.fill, imp_n=cell.impn, imp_p=cell.impp,
-                                      transformation=RMCGeometry.Transformation(move=cell.trcl.move,
-                                                                                rotate=cell.trcl.rotate))
-        elif cell.lat is not None:
-            R_cell = RMCGeometry.Cell(number=cell.number, bounds=cell.bounds.replace('#', '!'),
-                                      material=[cell.material], imp_n=cell.impn, imp_p=cell.impp)
-        else:
-            R_cell = RMCGeometry.Cell(number=cell.number, bounds=cell.bounds.replace('#', '!'),
-                                      material=[cell.material],
-                                      fill=cell.fill, imp_n=cell.impn, imp_p=cell.impp)
-
-        established_univ = False
-        for index in range(len(R_universes_ids)):
-            if R_universes_ids[index] == out_universe_id:
-                R_universes[index].cells.append(R_cell)
-                established_univ = True
-
-        if not established_univ:
-            R_lattice = None
-            if cell.lat is not None and cell.lat == 1:
-                [scope, pitch, fill, move] = transfer_lat1(cell, R_surfaces_model, R_macrobodys_model)
-                R_lattice = RMCGeometry.Lattice(type=cell.lat, scope=scope, pitch=pitch, fill=fill)
-                R_universe1 = RMCGeometry.Universe(number=out_universe_id, lattice=R_lattice,
-                                                   transformation=RMCGeometry.Transformation(move=move))
-                R_universe2 = RMCGeometry.Universe(number=out_universe_id * 1000 + 1)
-                R_universe2.cells.append(R_cell)
-                R_universes.append(R_universe2)
-                R_universes_ids.append(out_universe_id * 1000 + 1)
-                R_universes.append(R_universe1)
-                R_universes_ids.append(out_universe_id)
-            elif cell.lat is not None and cell.lat == 2:
-                print(' Warning: the lat params are uncorrected processed in MCNP cell ' + str(cell.number))
-                R_lattice = RMCGeometry.Lattice(type=cell.lat)
-                R_universe1 = RMCGeometry.Universe(number=out_universe_id, lattice=R_lattice)
-                R_universes.append(R_universe1)
-                R_universes_ids.append(out_universe_id)
+    try:
+        R_cells = []
+        R_universes = []
+        R_universes_ids = []
+        for cell in M_model.model['geometry'].cells:
+            if cell.unparsed is not None and cell.unparsed != '':
+                print(" Warning: unparsed items in MCNP cell " + str(cell.number) + " : " + cell.unparsed)
+            out_universe_id = 0
+            if cell.universe:
+                out_universe_id = cell.universe
+            if cell.trcl is not None and cell.lat is None:
+                R_cell = RMCGeometry.Cell(number=cell.number, bounds=cell.bounds.replace('#', '!'),
+                                          material=[cell.material],
+                                          fill=cell.fill, imp_n=cell.impn, imp_p=cell.impp,
+                                          transformation=RMCGeometry.Transformation(move=cell.trcl.move,
+                                                                                    rotate=cell.trcl.rotate))
+            elif cell.lat is not None:
+                R_cell = RMCGeometry.Cell(number=cell.number, bounds=cell.bounds.replace('#', '!'),
+                                          material=[cell.material], imp_n=cell.impn, imp_p=cell.impp)
             else:
-                R_universe = RMCGeometry.Universe(number=out_universe_id, lattice=R_lattice)
-                R_universe.cells.append(R_cell)
-                R_universes.append(R_universe)
-                R_universes_ids.append(out_universe_id)
+                R_cell = RMCGeometry.Cell(number=cell.number, bounds=cell.bounds.replace('#', '!'),
+                                          material=[cell.material],
+                                          fill=cell.fill, imp_n=cell.impn, imp_p=cell.impp)
 
-    # 添加 lat 里填充的 Universe 的 move 卡
-    for univ in R_universes:
-        if univ.lattice is not None:
-            move = np.array(univ.lattice.pitch) / 2
-            for fill_univ_id in univ.lattice.fill:
-                for univ2 in R_universes:
-                    if univ2.number == fill_univ_id:
-                        if univ2.transformation is not None:
-                            if not (univ2.transformation.move == move).all():
-                                print(" Warning: the variables of 'move' in Universe " + str(univ2.number) + " are uncorrected processed!")
-                        univ2.transformation = RMCGeometry.Transformation(move=move)
-                        break
+            established_univ = False
+            for index in range(len(R_universes_ids)):
+                if R_universes_ids[index] == out_universe_id:
+                    R_universes[index].cells.append(R_cell)
+                    established_univ = True
 
-    # 调整 universe 顺序
-    R_universes = sorted(R_universes, key=lambda x: x.number)
+            if not established_univ:
+                R_lattice = None
+                if cell.lat is not None and cell.lat == 1:
+                    [scope, pitch, fill, move] = transfer_lat1(cell, R_surfaces_model, R_macrobodys_model)
+                    R_lattice = RMCGeometry.Lattice(type=cell.lat, scope=scope, pitch=pitch, fill=fill)
+                    R_universe1 = RMCGeometry.Universe(number=out_universe_id, lattice=R_lattice,
+                                                       transformation=RMCGeometry.Transformation(move=move))
+                    R_universe2 = RMCGeometry.Universe(number=out_universe_id * 1000 + 1)
+                    R_universe2.cells.append(R_cell)
+                    R_universes.append(R_universe2)
+                    R_universes_ids.append(out_universe_id * 1000 + 1)
+                    R_universes.append(R_universe1)
+                    R_universes_ids.append(out_universe_id)
+                elif cell.lat is not None and cell.lat == 2:
+                    print(' Warning: the lat params are uncorrected processed in MCNP cell ' + str(cell.number))
+                    R_lattice = RMCGeometry.Lattice(type=cell.lat)
+                    R_universe1 = RMCGeometry.Universe(number=out_universe_id, lattice=R_lattice)
+                    R_universes.append(R_universe1)
+                    R_universes_ids.append(out_universe_id)
+                else:
+                    R_universe = RMCGeometry.Universe(number=out_universe_id, lattice=R_lattice)
+                    R_universe.cells.append(R_cell)
+                    R_universes.append(R_universe)
+                    R_universes_ids.append(out_universe_id)
 
-    R_geometry_model = RMCGeometry.Geometry(universes=R_universes)
-    test3 = str(R_geometry_model)
+        # 添加 lat 里填充的 Universe 的 move 卡
+        for univ in R_universes:
+            if univ.lattice is not None:
+                move = np.array(univ.lattice.pitch) / 2
+                for fill_univ_id in univ.lattice.fill:
+                    for univ2 in R_universes:
+                        if univ2.number == fill_univ_id:
+                            if univ2.transformation is not None:
+                                if not (univ2.transformation.move == move).all():
+                                    print(" Warning: the variables of 'move' in Universe " + str(univ2.number) + " are uncorrected processed!")
+                            univ2.transformation = RMCGeometry.Transformation(move=move)
+                            break
 
-    if M_model.model['externalsource'] is not None:
-        Combined_distribution = Combine_distrtibution(M_model.model['externalsource'].distributions)
-        h5source = None
-        surfsrcread_list = []
-        unparsed = ''
-        [RMC_Distribution, RMC_source] = Transfer_source(Combined_distribution, M_model.model['externalsource'].source, R_universes)
-        R_externalsource = ExternalSource(source=RMC_source, surfsrcread=surfsrcread_list, distributions=RMC_Distribution,
-                                          h5source=h5source, unparsed=unparsed)
-        R_model.model['externalsource'] = R_externalsource
+        # 调整 universe 顺序
+        R_universes = sorted(R_universes, key=lambda x: x.number)
+        R_geometry_model = RMCGeometry.Geometry(universes=R_universes)
+        test3 = str(R_geometry_model)
+    except:
+        print(" Error: failed to transfer the MCNP Geometry(Cell) block to RMC Geometry.")
 
-    if M_model.model['critical'] is not None:
-        power_iter = None
-        initsrc = None
-        if len(M_model.model['critical'].kcode) > 0:
-            kcode_option = M_model.model['critical'].kcode['KCODE']
-            power_iter = {"KEFF0": kcode_option[1], "POPULATION": [kcode_option[0], kcode_option[2], kcode_option[3]], "BATCHNUM": 1}
-        if len(M_model.model['critical'].ksrc) > 0:
-            ksrc_option = M_model.model['critical'].ksrc['KSRC']
-            initsrc = {"POINT": ksrc_option}
+    # transfer the SDEF block
+    try:
         if M_model.model['externalsource'] is not None:
-            initsrc = {"EXTERNALSOURCE": RMC_source[0]._id}
-        R_model.model['criticality'] = RMCCriticality.Criticality(power_iter=power_iter, initsrc=initsrc)
+            Combined_distribution = Combine_distrtibution(M_model.model['externalsource'].distributions)
+            h5source = None
+            surfsrcread_list = []
+            unparsed = ''
+            [RMC_Distribution, RMC_source] = Transfer_source(Combined_distribution, M_model.model['externalsource'].source, R_universes)
+            R_externalsource = ExternalSource(source=RMC_source, surfsrcread=surfsrcread_list, distributions=RMC_Distribution,
+                                              h5source=h5source, unparsed=unparsed)
+            R_model.model['externalsource'] = R_externalsource
+    except:
+        print(" Error: failed to transfer the MCNP SDEF block to RMC Source Definition.")
 
+    # transfer the kcode block
+    try:
+        if M_model.model['critical'] is not None:
+            power_iter = None
+            initsrc = None
+            if len(M_model.model['critical'].kcode) > 0:
+                kcode_option = M_model.model['critical'].kcode['KCODE']
+                power_iter = {"KEFF0": kcode_option[1], "POPULATION": [kcode_option[0], kcode_option[2], kcode_option[3]], "BATCHNUM": 1}
+            if len(M_model.model['critical'].ksrc) > 0:
+                ksrc_option = M_model.model['critical'].ksrc['KSRC']
+                initsrc = {"POINT": ksrc_option}
+            if M_model.model['externalsource'] is not None:
+                initsrc = {"EXTERNALSOURCE": RMC_source[0]._id}
+            R_model.model['criticality'] = RMCCriticality.Criticality(power_iter=power_iter, initsrc=initsrc)
+    except:
+        print(" Error: failed to transfer the MCNP Kcode block to RMC Criticality.")
 
     # combine RMC model
-    R_model.model['geometry'] = R_geometry_model
-    R_model.model['surface'] = R_surfaces_model
-    R_model.model['macrobody'] = R_macrobodys_model
-    R_model.model['material'] = R_materials_model
+    try:
+        R_model.model['geometry'] = R_geometry_model
+        R_model.model['surface'] = R_surfaces_model
+        R_model.model['macrobody'] = R_macrobodys_model
+        R_model.model['material'] = R_materials_model
 
+        # output the Unparsed blocks
+        if M_model.model['unparsed'] is not None and len(M_model.model['unparsed']) > 0:
+            print(" Warning: unparsed blocks in MCNP file : " + '  '.join(M_model.model['unparsed']))
 
-    # set the Criticality block
-    # power_iter = {"KEFF0": 1, "POPULATION": [10000, 50, 300], "BATCHNUM": 1}
-    # R_model.model['criticality'] = RMCCriticality.Criticality(power_iter=power_iter,
-    #                                                           unparsed='InitSrc point = 0 0 0')
-    R_model.model[
-        'plot'] = 'PLOT\n' \
-                  'PlotID 1 Type = slice Color = cell Pixels=10000 10000 Vertexes=-100 -100 0 100 100 0\n' \
-                  'PlotID 2 type = slice color = cell pixels=10000 10000 vertexes=-100 0 -100 100 0 100'
+        # set the Criticality block
+        # power_iter = {"KEFF0": 1, "POPULATION": [10000, 50, 300], "BATCHNUM": 1}
+        # R_model.model['criticality'] = RMCCriticality.Criticality(power_iter=power_iter,
+        #                                                           unparsed='InitSrc point = 0 0 0')
+        # set the plot block
+        R_model.model[
+            'plot'] = 'PLOT\n' \
+                      'PlotID 1 Type = slice Color = cell Pixels=10000 10000 Vertexes=-100 -100 0 100 100 0\n' \
+                      'PlotID 2 type = slice color = cell pixels=10000 10000 vertexes=-100 0 -100 100 0 100'
 
-    # output 2 files, RMC python file and RMC binary file
-    with open(inp_MCNP + '.rmc.python', 'w+') as f:
-        f.write(str(R_model))
-    with open(inp_MCNP + '.rmc.binary', 'w+') as f:
-        R_py_file = inp_MCNP + '.rmc.python'
-        try:
-            R_parserd_model = RMCPlainParser(R_py_file).parsed
-            f.write(str(R_parserd_model))
-        except:  # ValueError as e:
-            print(" Warning: could not generat RMC binary input file.")
-            # print(" Catch the exception: ", e)
+        # output 2 files, RMC python file and RMC binary file
+        with open(inp_MCNP + '.rmc.python', 'w+') as f:
+            f.write(str(R_model))
+        with open(inp_MCNP + '.rmc.binary', 'w+') as f:
+            R_py_file = inp_MCNP + '.rmc.python'
+            try:
+                R_parserd_model = RMCPlainParser(R_py_file).parsed
+                f.write(str(R_parserd_model))
+            except:  # ValueError as e:
+                print(" Warning: could not generat RMC binary input file.")
+                # print(" Catch the exception: ", e)
+    except:
+        print(" Error: failed to output the RMC Model.")
 
     print('file: [' + inp_MCNP + '] have been processed!\n')
 
