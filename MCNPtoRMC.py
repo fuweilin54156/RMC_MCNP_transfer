@@ -219,8 +219,9 @@ def transfer(inp_MCNP):
         try:
             R_parserd_model = RMCPlainParser(R_py_file).parsed
             f.write(str(R_parserd_model))
-        except ValueError:
+        except ValueError as e:
             print(" Error: could not generat RMC binary input file.")
+            # print(" Catch the exception: ", e)
 
     print('file: [' + inp_MCNP + '] have been processed!\n')
 
