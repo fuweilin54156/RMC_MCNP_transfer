@@ -548,7 +548,7 @@ class Geometry(BaseModel):
                 # bounds = re.compile(r'[^&:]?-?!?\d+\.?\d*').findall(cell.bounds)
                 # cell.bounds = re.compile(r'[&]+|[:]+|[()]|-?!?\d+\.?\d*').findall(cell.bounds)  # 匹配栅元中的布尔表达式
                 # 匹配栅元中的布尔表达式,提取包含!+数字和所有数字[(!1,2:,3)&,-1.3&,4.2:]这种list
-                cell.bounds = re.compile(r'\(?\s?-?!?\d+\.?\d*\s?\)?\s?&?\s?:?').findall(cell.bounds)
+                cell.bounds = re.compile(r'[\(\s]*-?!?\d+\.?\d*[\s\)]*\s?&?\s?:?').findall(cell.bounds)
                 for i, card in enumerate(cell.bounds):
                     if '!' in card:
                         continue
