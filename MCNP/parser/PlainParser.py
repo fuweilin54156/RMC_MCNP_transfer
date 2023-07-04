@@ -97,6 +97,13 @@ class PlainParser:
                                 if tr_model[i].num == surface.tr.num:
                                     surface.tr.move = tr_model[i].move
                                     surface.tr.rotate = tr_model[i].rotate
+                for body in surface_model.macrobodys:
+                    if body.tr is not None:
+                        if body.tr.num is not None:
+                            for i in range(len(tr_model)):
+                                if tr_model[i].num == body.tr.num:
+                                    body.tr.move = tr_model[i].move
+                                    body.tr.rotate = tr_model[i].rotate
             except:
                 print(" Error: failed to parse the MCNP TR or TRCL card")
                 self.parsed_model.model['unparsed'] += other_cards[2]
