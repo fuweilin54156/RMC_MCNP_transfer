@@ -159,9 +159,10 @@ def transfer(inp_MCNP):
                     R_universes.append(R_universe1)
                     R_universes_ids.append(out_universe_id)
                 elif cell.lat is not None and cell.lat == 2:
-                    print(' Warning: the lat params are uncorrected processed in MCNP cell ' + str(cell.number))
-                    R_lattice = RMCGeometry.Lattice(type=cell.lat)
-                    R_universe1 = RMCGeometry.Universe(number=out_universe_id, lattice=R_lattice)
+                    [scope, sita, pitch, fill, move] = transfer_lat2(cell, R_surfaces_model, R_macrobodys_model)
+                    R_lattice = RMCGeometry.Lattice(type=cell.lat, scope=scope, pitch=pitch, fill=fill, theta=sita)
+                    R_universe1 = RMCGeometry.Universe(number=out_universe_id, lattice=R_lattice,
+                                                       transformation=RMCGeometry.Transformation(move=move))
                     R_universes.append(R_universe1)
                     R_universes_ids.append(out_universe_id)
                 else:
@@ -173,7 +174,10 @@ def transfer(inp_MCNP):
         # 添加 lat 里填充的 Universe 的 move 卡
         for univ in R_universes:
             if univ.lattice is not None:
-                move = np.array(univ.lattice.pitch) / 2
+                if univ.lattice.type == 1:
+                    move = np.array(univ.lattice.pitch) / 2
+                elif univ.lattice.type == 2:
+                    move = [0, 0, 0]
                 for fill_univ_id in univ.lattice.fill:
                     for univ2 in R_universes:
                         if univ2.number == fill_univ_id:
@@ -224,8 +228,10 @@ def transfer(inp_MCNP):
     # combine RMC model
     try:
         R_model.model['geometry'] = R_geometry_model
-        R_model.model['surface'] = R_surfaces_model
-        R_model.model['macrobody'] = R_macrobodys_model
+        if len(M_model.model['surface'].surfaces) > 0:
+            R_model.model['surface'] = R_surfaces_model
+        if len(M_model.model['surface'].macrobodys) > 0:
+            R_model.model['macrobody'] = R_macrobodys_model
         R_model.model['material'] = R_materials_model
 
         # output the Unparsed blocks
@@ -357,6 +363,131 @@ def transfer_lat1(cell, R_surfaces, R_macrobodys):
             pitch[i] = 0
 
     return scope, pitch, fill, move
+
+def transfer_lat2(cell, R_surfaces, R_macrobodys):
+    scope = np.zeros(2)
+    pitch = np.zeros(2)
+    fill = np.ones(1)
+    move = np.zeros(3)
+    sita = 0
+    params = cell.fill  # like '-8 : 8 -8 : 8 -8 : 8 1 1 1 1 1 1 '
+    x_left = 0
+    x_right = 0
+    y_left = 0
+    y_right = 0
+    index = 0
+    if ':' in params:
+        x_left = params[0]
+        x_right = params[2]
+        index = 3
+        if ':' in params[3:]:
+            y_left = params[3]
+            y_right = params[5]
+            index = 6
+            if ':' in params[6:]:
+                z_left = params[6]
+                z_right = params[8]
+                index = 9
+    scope = np.array([x_right - x_left + 1, y_right - y_left + 1])
+    # fill = np.array(params[index:].replace(cell.universe, cell.universe*1000+1))
+    fill = np.array([i if i is not cell.universe else i*1000+1 for i in params[index:]])
+    nums_in_bounds = re.findall(r'[0-9]+', cell.bounds)
+    nums_in_bounds = [int(i) for i in nums_in_bounds]
+    if len(nums_in_bounds) > 1:  # not Macrobody case
+        if x_right - x_left + 1 > 1:
+            x_left_surf_num = nums_in_bounds[0]
+            x_right_surf_num = nums_in_bounds[1]
+            y_left_surf_num = nums_in_bounds[2]
+            y_right_surf_num = nums_in_bounds[3]
+            z_left_surf_num = nums_in_bounds[2]
+            z_right_surf_num = nums_in_bounds[3]
+            x_left_surf = None
+            x_right_surf = None
+            y_left_surf = None
+            y_right_surf = None
+            z_left_surf = None
+            z_right_surf = None
+            for surf in R_surfaces.surfaces:
+                if surf.number == x_left_surf_num:
+                    x_left_surf = surf
+                if surf.number == x_right_surf_num:
+                    x_right_surf = surf
+                if surf.number == y_left_surf_num:
+                    y_left_surf = surf
+                if surf.number == y_right_surf_num:
+                    y_right_surf = surf
+                if surf.number == z_left_surf_num:
+                    z_left_surf = surf
+                if surf.number == z_right_surf_num:
+                    z_right_surf = surf
+            pitch[0] = abs(x_right_surf.parameters[-1] - x_left_surf.parameters[-1])
+            y_length = None
+            z_length = None
+            if len(y_left_surf.parameters) == 4:
+                y_length = abs(y_left_surf.parameters[3] - y_right_surf.parameters[3]) / math.sqrt(
+                    y_left_surf.parameters[0] * y_left_surf.parameters[0] +
+                    y_left_surf.parameters[1] * y_left_surf.parameters[1] +
+                    y_left_surf.parameters[2] * y_left_surf.parameters[2])
+            if len(z_left_surf.parameters) == 4:
+                z_length = abs(z_left_surf.parameters[3] - z_right_surf.parameters[3]) / math.sqrt(
+                    z_left_surf.parameters[0] * z_left_surf.parameters[0] +
+                    z_left_surf.parameters[1] * z_left_surf.parameters[1] +
+                    z_left_surf.parameters[2] * z_left_surf.parameters[2])
+            if y_length == z_length:
+                pitch[1] = y_length
+            tantheta = abs(y_left_surf.parameters[0]/y_left_surf.parameters[1])
+            sita = 90 - math.atan(tantheta)*180/math.pi
+    else:
+        # Macrobody case, only support "RPP"
+        body_num = nums_in_bounds[0]
+        for body in R_macrobodys.macrobodies:
+            if body_num == body.body_number:
+                bound_body = body
+                break
+        if bound_body.type in ['HEX'] or bound_body.type in ['RHP']:
+            if len(bound_body.params) == 9:
+                length = math.sqrt(bound_body.params[6]*bound_body.params[6]+bound_body.params[7]*bound_body.params[7]+
+                                   bound_body.params[8]*bound_body.params[8])
+                pitch[0] = 2 * length
+                pitch[1] = 2 * length
+                sita = 60
+            if len(bound_body.params) == 15:
+                first_vector = [bound_body.params[6], bound_body.params[7], bound_body.params[8]]
+                first_length = math.sqrt(bound_body.params[6]*bound_body.params[6]+bound_body.params[7]*bound_body.params[7]+bound_body.params[8]*bound_body.params[8])
+                second_vector = [bound_body.params[9], bound_body.params[10], bound_body.params[11]]
+                second_length = math.sqrt(bound_body.params[9]*bound_body.params[9]+bound_body.params[10]*bound_body.params[10]+bound_body.params[11]*bound_body.params[11])
+                third_vector = [bound_body.params[12], bound_body.params[13], bound_body.params[14]]
+                third_length = math.sqrt(bound_body.params[12]*bound_body.params[12]+bound_body.params[13]*bound_body.params[13]+bound_body.params[14]*bound_body.params[14])
+                if first_vector[1] == 0 and first_vector[2] == 0:
+                    x_length = first_length
+                    if second_length == third_length:
+                        y_length = second_length
+                        cos_theta = first_vector[0]*second_vector[0]/(x_length*y_length)
+                if second_vector[1] == 0 and second_vector[2] == 0:
+                    x_length = second_length
+                    if first_length == third_length:
+                        y_length = first_length
+                        cos_theta = second_vector[0]*first_vector[0]/(x_length*y_length)
+                if third_vector[1] == 0 and third_vector[2] == 0:
+                    x_length = third_length
+                    if first_length == second_length:
+                        y_length = first_length
+                        cos_theta = third_vector[0] * first_vector[0]/(x_length * y_length)
+                pitch[0] = 2 * x_length
+                pitch[1] = 2 * y_length
+                if math.acos(cos_theta)*180/math.pi < 90:
+                    sita = math.acos(cos_theta) * 180/math.pi
+                else:
+                    sita = 180 - math.acos(cos_theta) * 180/math.pi
+        else:
+            print(' Warning: the lat params are uncorrected processed in MCNP cell ' + str(cell.number))
+
+    # process move
+    move[0] = (x_left + y_left/2) * pitch[0]
+    move[1] = -math.sqrt(pow(y_left * pitch[1], 2)-pow(y_left * pitch[1]/2, 2))
+    move[2] = 0
+
+    return scope, sita, pitch, fill, move
 
 
 def Transfer_source(distributions, sources, R_universes):
