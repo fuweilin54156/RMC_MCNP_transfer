@@ -384,7 +384,7 @@ class P(Surface):
 
     def translation(self):
         if self.move is not None:
-            self.parameters[3] = self.parameters[0] * self.move[0] + self.parameters[1] * self.move[1] + \
+            self.parameters[3] += self.parameters[0] * self.move[0] + self.parameters[1] * self.move[1] + \
                                  self.parameters[2] * self.move[2]
             self.move = None
         return self
