@@ -344,6 +344,7 @@ class PlainParser:
 
                 cell_geom = cell_geom[0:len(cell_geom) - 1].replace(' ', '')
                 cell_geom = cell_geom.replace(')(', ')&(')
+                cell_geom = cell_geom.replace('()&', '')
 
                 # 解析几何中的其他选项
                 cell_dict = {}
