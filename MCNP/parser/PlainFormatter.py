@@ -17,8 +17,12 @@ class PlainFormatter:
     def read(self):
         if self._read:
             return
-        with open(self.file_name, 'r') as f:
-            self.content = f.read()
+        try:
+            with open(self.file_name, 'r', encoding='utf-8') as f:
+                self.content = f.read()
+        except:
+            with open(self.file_name, 'r', encoding='gbk') as f:
+                self.content = f.read()
 
     @property
     def changed(self):

@@ -262,7 +262,7 @@ def transfer(inp_MCNP):
     except:
         print(" Error: failed to output the RMC Model.")
 
-    print('file: [' + inp_MCNP + '] have been processed!\n')
+    print('File: [' + inp_MCNP + '] have been processed!\n')
 
 
 def transfer_lat1(cell, R_surfaces, R_macrobodys):
@@ -363,6 +363,7 @@ def transfer_lat1(cell, R_surfaces, R_macrobodys):
             pitch[i] = 0
 
     return scope, pitch, fill, move
+
 
 def transfer_lat2(cell, R_surfaces, R_macrobodys):
     scope = np.zeros(2)
@@ -701,6 +702,7 @@ def Combine_distrtibution(source_distribution):
                 inner_dict['DS'] = distribution.DS[1:len(distribution.DS)]
                 distributions[int(distribution.DS[0])] = inner_dict
     return distributions
+
 
 def postprocess(value, R_universes=None):
     """
