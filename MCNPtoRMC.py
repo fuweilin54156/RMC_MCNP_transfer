@@ -100,8 +100,12 @@ def transfer(inp_MCNP):
                 duplicate_mats.append(mat.mat_id)
                 R_mat = RMCMat.Material(mat_id=mat.mat_id, density=mat.densities[0], nuclides=mat.nuclides)
                 R_materials.append(R_mat)
+            elif not mat.densities:
+                print(' Warning: no density defined in mat: ' + str(mat.mat_id))
+                R_mat = RMCMat.Material(mat_id=mat.mat_id, density=0, nuclides=mat.nuclides)
+                R_materials.append(R_mat)
         if duplicate_mats:
-            print(' Warning: find duplicated mat densities, id:' + str(duplicate_mats))
+            print(' Warning: find duplicated mat densities, id: ' + str(duplicate_mats))
         if M_model.model['materials']._unparsed is not None and M_model.model['materials']._unparsed != '':
             print(" Warning: unparsed items in MCNP materials : " + M_model.model['materials']._unparsed)
 
