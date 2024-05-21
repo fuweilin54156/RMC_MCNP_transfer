@@ -56,6 +56,8 @@ class PlainParser:
             card_list = cards.split('\n')
             card_title = card_list[0].split(' ', 2)
             card = card_title[0].upper()
+            if card =='EXTERNALSOURCE':
+                print("#####")
 
             if card == 'INCLUDE':
                 if (len(card_title) == 2) \

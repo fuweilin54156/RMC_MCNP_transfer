@@ -821,28 +821,28 @@ def Transfer_source(distributions, sources, R_universes,mode):
             if sb_option == None:
                 sb_option = 'D'
         # 检查 "SP" 是否不在 distribution_value 中
-    if probability_value==[]:
-        total_elements = len(type_value)
-        
-        # 避免除以零错误
-        if total_elements == 0:
-            raise ValueError("Source type_value list is empty, cannot divide by zero")
-
-        # 根据 type 生成 probability_value
-        if type in [0, 1, 3, 5]:  # 对于类型 0, 1, 3, 5
-            probability_value = [(1 / total_elements) for _ in range(total_elements)]
-        elif type == 2:  # 对于类型 2
-            # 元素个数是 type_value 列表元素个数的 1/3，向下取整
-            probability_value_count = total_elements // 3
-            probability_value = [(1 / probability_value_count) for _ in range(probability_value_count)]
-        elif type == 4:  # 对于类型 4
-            # 元素个数是 type_value 列表元素个数 - 1，需要确保总数不为0
-            probability_value_count = total_elements - 1 if total_elements > 0 else 0
-            probability_value = [(1 / probability_value_count) for _ in range(probability_value_count)]
-
+        if probability_value==[]:
+            total_elements = len(type_value)
             
+            # 避免除以零错误
+            if total_elements == 0:
+                raise ValueError("Source type_value list is empty, cannot divide by zero")
 
-        r_Distribution=Distribution(id=id, depend=depend_id, type=type, value=type_value, probability=probability_value, bias=bias_value)
+            # 根据 type 生成 probability_value
+            if type in [0, 1, 3, 5]:  # 对于类型 0, 1, 3, 5
+                probability_value = [(1 / total_elements) for _ in range(total_elements)]
+            elif type == 2:  # 对于类型 2
+                # 元素个数是 type_value 列表元素个数的 1/3，向下取整
+                probability_value_count = total_elements // 3
+                probability_value = [(1 / probability_value_count) for _ in range(probability_value_count)]
+            elif type == 4:  # 对于类型 4
+                # 元素个数是 type_value 列表元素个数 - 1，需要确保总数不为0
+                probability_value_count = total_elements - 1 if total_elements > 0 else 0
+                probability_value = [(1 / probability_value_count) for _ in range(probability_value_count)]
+
+                
+
+            r_Distribution=Distribution(id=id, depend=depend_id, type=type, value=type_value, probability=probability_value, bias=bias_value)
         
         
         
