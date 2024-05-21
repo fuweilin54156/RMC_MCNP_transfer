@@ -61,6 +61,7 @@ class PlainFormatter:
             changed_inp = re.sub(r'\n(?P<content>[ ]*[^ ]+.*?)\$[^\n]*\n', '\n\g<content>\n', changed_inp)
             changed_inp = re.sub(r'(?P<front>[0-9\.]+)-(?P<back>[0-9]+)', '\g<front>e-\g<back>', changed_inp)
             self._s_changed = (changed_inp != self.content)
+
             self.content = changed_inp
 
         # Remove the comment at the head and too many line-end signs at the end of the file.
@@ -121,7 +122,8 @@ class PlainFormatter:
                 self._special_define_processed = (changed_inp != self.content)
                 continue
 
-        self.content = changed_inp
+        
+        self.content = changed_inp.upper()
         self._formatted = True
         return self.content
 

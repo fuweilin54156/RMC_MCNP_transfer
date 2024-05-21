@@ -116,11 +116,11 @@ class Cell(BaseModel):
             s += 'void=1 '
         if self.noburn:
             s += 'noburn=1'
-        if self.imp_n:
+        if self.imp_n is not None:
             s += f'imp:n={self.imp_n} '
-        if self.imp_p:
+        if self.imp_p is not None:
             s += f'imp:p={self.imp_p} '
-        if self.imp_e:
+        if self.imp_e is not None:
             s += f'imp:e={self.imp_e} '
         if self.transformation is not None:
             s += str(self.transformation) + ' '

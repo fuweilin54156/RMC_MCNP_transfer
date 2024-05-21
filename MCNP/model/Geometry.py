@@ -66,20 +66,24 @@ class Cell(BaseModel):
         'FILL': [int],
         'U': [int],
         'LAT': [int],
-        'TRCL': ['list', float, -1],
-        r'\*TRCL': ['list', float, -1],
-        'INNER': [bool],
-        'IMP:N': [float],
-        'IMP:P': [float],
-        'IMP:E': [float]
+        'TRCL': ['list', int, -1],
+        r'\*TRCL': ['list', int, -1],
+        'IMP:N': [int],
+        'IMP:P': [int],
+        'IMP:E': [int],
+        'VOL': [float],
+        'TMP': [float],
+        'VOID': [bool]
+        #体积VOL在RMC中不起作用
     }
 
-    def __init__(self, number=-1, bounds='', material=None, density=None, fill=None, inner=False, u=0, lat=None,
-                 unparsed=None, impn=None, impp=None, impe=None, trcl=None, likeid=None):
+    def __init__(self, number=-1, bounds='', material=None, density=None, fill=None, u=0, lat=None,
+                 unparsed=None, impn=None, impp=None, impe=None, trcl=None, likeid=None, vol=None, 
+                 tmp=None, void=False):
         self.number = number
         self.bounds = bounds
         self.fill = fill
-        self.inner = inner
+        
         self.material = material
         self.density = density
         self.universe = u
@@ -90,6 +94,10 @@ class Cell(BaseModel):
         self.impe = impe
         self.trcl = trcl
         self.likeid = likeid
+
+        self.vol = vol
+        self.tmp = tmp
+        self.void = void
 
     def check(self):
         assert self.number >= 0
@@ -111,8 +119,17 @@ class Cell(BaseModel):
             self.trcl = Transformation(paras=options['TRCL'])
         if r'\*TRCL' in options.keys():
             self.trcl = Transformation(paras=options[r'\*TRCL'], angle=1)
+            
+        if 'VOL' in options.keys():
+            self.vol = options['VOL']
+        if 'TMP' in options.keys():
+            self.tmp = options['TMP']
+        if 'VOID' in options.keys():
+            self.void = options['VOID']
+        
 
     def __str__(self):
+        
         s = '%d %d ' % (self.number, self.material)
         if self.density is not None:
             s += '%f ' % self.density
@@ -165,6 +182,7 @@ class Geometry(BaseModel):
         s = ''
         for cell in self.cells:
             s += str(cell)
+            cellStr = str(cell)
         if self.unparsed is not None and self.unparsed != '':
             s += 'Warning: No parsed cells in geometry block:\n' + self.unparsed
         s += '\n\n'

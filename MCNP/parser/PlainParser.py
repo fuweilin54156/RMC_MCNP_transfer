@@ -10,6 +10,8 @@ from MCNP.model.Geometry import *
 from MCNP.model.Material import *
 from MCNP.model.Source import *
 from MCNP.model.Critically import *
+from MCNP.model.Mode import *
+
 
 
 class PlainParser:
@@ -36,8 +38,23 @@ class PlainParser:
         geometry_card = self.content[0].split('\n')
         surface_card = self.content[1].split('\n')
 
+        #防止出现MCNP没用空格分隔的情况
+        geometry_card = [text.replace("#", " #") for text in geometry_card]
+        geometry_card = [text.replace(":", " : ") for text in geometry_card]
+        # 使用正则表达式来匹配"imp : x,y,z...=n"的字段
+        pattern = r'IMP\s*:\s*([a-zA-Z0-9_,]+)\s*=\s*([0-9]+)'
+        # 对列表中的每个元素进行替换操作
+        replaced_text_list = []
+        for text in geometry_card:
+            # 替换匹配到的字段为"imp:x=n imp:y=n imp:z=n ..."
+            replaced_text = re.sub(pattern, lambda match: ' '.join([f'IMP:{s.lower()} = {match.group(2)}' for s in match.group(1).split(',')]), text)
+            replaced_text_list.append(replaced_text)
+        geometry_card = replaced_text_list
+
+
         try:
             [cells, geom_unparsed] = self.__parse_geometry(geometry_card)
+
             geometry_model = Geometry(cells=cells, unparsed=geom_unparsed)
         except:
             print(" Error: failed to parse the MCNP geometry block")
@@ -128,7 +145,23 @@ class PlainParser:
                 print(" Error: failed to parse the MCNP kcode block")
                 self.parsed_model.model['unparsed'] += other_cards[4]
 
-            self.parsed_model.model['unparsed'] += other_cards[5]
+
+            # process MODE card
+            try:
+                if len(other_cards[5]) > 0:
+                    mode_card = other_cards[5]
+                    mode_model = self.__parse_mode(mode_card)
+                    self.parsed_model.model['mode'] = mode_model
+            except:
+                print(" Error: failed to parse the MCNP mode block")
+                self.parsed_model.model['unparsed'] += other_cards[5]
+
+            # if len(other_cards[5]) > 0:
+            #     mode_card = other_cards[5]
+            #     mode_model = self.__parse_mode(mode_card)
+            #     self.parsed_model.model['mode'] = mode_model
+
+            self.parsed_model.model['unparsed'] += other_cards[6]
 
         try:
             self.parsed_model.model['surface'] = surface_model
@@ -168,6 +201,7 @@ class PlainParser:
         trcl_lines = []
         sdef_lines = []
         critical_lines = []
+        mode_lines = []
         un_parsed = []
         for line in lines:
             words = line.split(' ')
@@ -193,9 +227,11 @@ class PlainParser:
                 critical_lines.append(line)
             elif re.match(r'KSRC', words[0], re.I):
                 critical_lines.append(line)
+            elif re.match(r'MODE', words[0], re.I):
+                mode_lines.append(line)
             else:
                 un_parsed.append(line)
-        return [mat_lines, imp_lines, trcl_lines, sdef_lines, critical_lines, un_parsed]
+        return [mat_lines, imp_lines, trcl_lines, sdef_lines, critical_lines, mode_lines, un_parsed]
 
     @staticmethod
     def __parse_material(content):
@@ -302,10 +338,13 @@ class PlainParser:
 
     @staticmethod
     def __parse_geometry(content):
+        #
+    
         cells = []
         universes = []
         geo_unparsed = ''
         for cell in content:
+            
             cell_len = len(cell.split())
             cell_id = int(cell.split()[0])
             unparsed = ''
@@ -347,6 +386,7 @@ class PlainParser:
                 cell_geom = cell_geom.replace('()&', '')
 
                 # 解析几何中的其他选项
+                #解析cell中的其他属性
                 cell_dict = {}
                 cell_card_options = copy.deepcopy(Cell.card_option_types)
                 if index != cell_len:
@@ -354,8 +394,19 @@ class PlainParser:
                     while unparsed_items is not '':
                         if 'LAT' in cell_dict and 'FILL' in cell_card_options:
                             cell_card_options['FILL'] = ['list', int, -1]
+                        # if 'LAT' in cell_dict and 'FILL' in cell_card_options:
+                        #     cell_card_options['FILL'] = ['list', int, -1]
+                        #     if mat_id != 0 :
+                        #         # print(' Error: RMC only supports the use of vacuum LATTICE.')
+                        #         # raise ValueError('LATTICE material is not 0.\n')
+                        #         mat_id = 0
+                        #         mat_density = None
+                            
+                            
+                            
                         [cell_dict_item, unparsed_items_new] = PlainParser._parse_option(unparsed_items,
                                                                                          cell_card_options)
+                        # cell_card_options需要加vol等选项
                         if cell_dict_item:
                             for key in cell_dict_item:
                                 cell_dict[key] = cell_dict_item[key]
@@ -379,10 +430,21 @@ class PlainParser:
                 unparsed_items = ' '.join(cell.split()[4:])
                 while unparsed_items is not '':
                     if 'LAT' in cell_dict and 'FILL' in cell_card_options:
-                        cell_card_options.pop('FILL')
+                        cell_card_options['FILL'] = ['list', int, -1]
+                    # if 'LAT' in cell_dict and 'FILL' in cell_card_options:
+                    #     cell_card_options['FILL'] = ['list', int, -1]
+                    #     if mat_id != 0 :
+                    #         # print(' Error: RMC only supports the use of vacuum LATTICE.')
+                    #         # raise ValueError('LATTICE material is not 0.\n')
+                    #         mat_id = 0
+                    #         mat_density = None
+                            
+                            
+                            
                     [cell_dict_item, unparsed_items_new] = PlainParser._parse_option(unparsed_items,
                                                                                      cell_card_options)
                     if cell_dict_item:
+                        
                         for key in cell_dict_item:
                             cell_dict[key] = cell_dict_item[key]
                     if unparsed_items_new is '':
@@ -421,6 +483,8 @@ class PlainParser:
         source_list = []
         distribution_list = []
         unparsed = ''
+        depend_dict={}
+        new_depend_dict = {}
         for option in content:
             new_option = []
             for value in option.split(' '):
@@ -428,14 +492,89 @@ class PlainParser:
                     value_list = list(value)
                     for final_value in value_list:
                         new_option.append(final_value)
+                
+                # 正则表达式解释：
+                # r'\bF[a-zA-Z]+\b' 匹配单词边界上的以 'F' 开始后面跟着一串字母的完整单词
+                # re.IGNORECASE 使匹配不区分大小写
+
+                elif re.match(r'\bF[a-zA-Z]+\b', value, flags=re.IGNORECASE):
+                    # 单词匹配成功后，将 'F' 和后面的字母部分分别添加到 new_option 列表中
+                    # 由于匹配的是 'F' 后面跟着任意一串字母，我们需要将匹配到的单词拆分
+                    matched_word = re.match(r'\bF[a-zA-Z]+\b', value, flags=re.IGNORECASE).group()
+                    f_char = matched_word[0]  # 'F'
+                    rest_of_word = matched_word[1:]  # 后面的字母部分
+                    new_option.extend([f_char, rest_of_word])
+                    
                 else:
                     new_option.append(value)
             option = ' '.join([str(x) for x in new_option])
+            
+
             if option.split()[0].upper() == 'SDEF':
                 source = Source()
                 opt_lst = PlainParser._parse_multioption(option.split(' ', 1)[1], Source.card_option_types)
-                source.add_options(opt_lst)
-                source_list.append(source)
+                new_opt_lst = {}
+                # 遍历原始字典中的所有项
+                for key, value in opt_lst.items():
+                    # 检查值是否是列表，如果不是，则转换为单元素列表
+                    value_list = value if isinstance(value, list) else [value]
+                    
+                    # 初始化新列表来存储过滤后的值
+                    filtered_values = []
+                    
+                    # 遍历列表中的每个元素
+                    for item in value_list:
+                        # 如果元素是字符串，检查是否包含'depend_option='
+                        if isinstance(item, str):
+                            if item.startswith('depend_option='):
+                                # 提取依赖项键
+                                depend_key = item.split('depend_option=')[1]
+                                # 添加到depend_dict字典中
+                                depend_dict[opt_lst[key][0]] = opt_lst[depend_key][0]
+                            else:
+                                # 如果不包含'depend_option='，则添加到过滤后的列表中
+                                filtered_values.append(item)
+                        else:
+                            # 如果元素不是字符串，则直接添加到过滤后的列表中
+                            filtered_values.append(item)
+                    
+                    # 更新new_opt_lst字典
+                    new_opt_lst[key] = filtered_values
+
+                # for key, value_list in opt_lst.items():
+                #     for item in value_list:
+                #         # 检查item是否为字符串，并且是否包含'depend_option='
+                #         if isinstance(item, str) and 'depend_option=' in item:
+                #             # 提取depend_option的键
+                #             depend_option_key = item.split('depend_option=')[1]
+                            
+                #             # 检查depend_option_key是否是opt_lst中的一个键
+                #             if depend_option_key in opt_lst:
+                #                 # 添加到depend_dict字典中
+                #                 depend_dict[opt_lst[key][0]] = opt_lst[depend_option_key][0]
+                #             else:
+                #                 print(f"Warning: depend_option key '{depend_option_key}' not found in opt_lst")
+    
+                # 遍历原始字典中的所有项
+                for key, value in depend_dict.items():
+                    # 将键和值中的字符'd'去掉，并转换为整数
+                    int_key = int(key[1:])
+                    int_value = int(value[1:])
+                    # 将转换后的键值对添加到新字典中
+                    new_depend_dict[int_key] = int_value
+                
+
+                # # 遍历每个键和值列表
+                # for key, value_list in new_opt_lst.items():
+                #     # 使用列表推导式移除包含'depend_option='的元素
+                #     new_opt_lst[key] = [item for item in value_list if not item.startswith('depend_option=')]
+                
+                source.add_options(new_opt_lst)
+                source_list.append(source) # 无用
+                
+
+                        
+
             elif re.match(r'SP', option, flags=re.I):
                 distribution = Distribution()
                 sp_list = PlainParser._parse_multioption(option, Distribution.card_option_types)
@@ -454,6 +593,13 @@ class PlainParser:
             elif re.match(r'DS', option, flags=re.I):
                 distribution = Distribution()
                 ds_list = PlainParser._parse_multioption(option, Distribution.card_option_types)
+                
+                depend_distribution_id = new_depend_dict[int(ds_list['DS'][0])]
+                ds_list['DS'].append('depend_distribution_id='+str(depend_distribution_id))
+                
+                
+
+
                 distribution.add_options(ds_list)
                 distribution_list.append(distribution)
             else:
@@ -473,6 +619,21 @@ class PlainParser:
             else:
                 unparsed += option
         return Criticality(kcode=kcode_list, ksrc=ksrc_list, unparsed=unparsed)
+    
+    @staticmethod
+    def __parse_mode(content):
+        mode_list = []
+        unparsed = ''
+        for option in content:
+            option_split=option.split()
+            if option_split[0].upper() == 'MODE':
+                if len(option_split)>1:
+                    mode_list = PlainParser._parse_multioption(option, Mode.card_option_types)
+                else:
+                    mode_list = ['N']
+            else:
+                unparsed += content
+        return Mode(mode=mode_list, unparsed=unparsed)
 
     @staticmethod
     def _parse_option(content, cards):
@@ -493,7 +654,17 @@ class PlainParser:
             return [options_dict, unparsed]
         else:
             dtype = cards[matched_key]
+            
+            
             if dtype[0] == 'list':
+                expected_type, elem_type, expected_count = dtype
+                # 获取实际参数数量
+                actual_count = len(options[1:])        
+                # 检查参数数量是否符合预期
+                if expected_count>=0:
+                    if expected_count is not None and actual_count != dtype[2]:
+                        print(f"\n Error:Expected {expected_count} parameters for {matched_key}, but got {actual_count}.\n")
+                        raise ValueError(f"Parameter count mismatch for {matched_key}: Expected {expected_count}, got {actual_count}")
                 [opt_val, index] = PlainParser._parse_list(options, dtype[1])
             else:
                 [opt_val, index] = PlainParser._parse_val(options, dtype[0])
@@ -502,6 +673,8 @@ class PlainParser:
             # 移除已经解析过的部分
             unparsed = ' '.join(options[index:])
             return [options_dict, unparsed]
+    
+
 
     @staticmethod
     def _parse_multioption(content, cards):
@@ -581,11 +754,19 @@ class PlainParser:
                         opt_list.append(value)
                     except ValueError:
                         break
-            elif re.fullmatch(r'FCEL', options[index].upper()):
-                option = options[index]
+            elif re.fullmatch(r'[F]', options[index].upper()):
+                option = options[index + 2] + options[index + 3]
                 opt_list.append(option)
-                opt_list.append('=')
-                index += 1
+                depend_option=options[index + 1]
+                depend_option=depend_option.upper()
+                opt_list.append('depend_option='+depend_option)
+                index += 4
+                
+            # elif re.fullmatch(r'FCEL', options[index].upper()):
+            #     option = options[index]
+            #     opt_list.append(option)
+            #     opt_list.append('=')
+            #     index += 1
             else:
                 try:
                     value = func(options[index])

@@ -110,38 +110,40 @@ class ExternalSource(BaseModel):
 
 
 class Source(BaseModel):
-    card_option_types = {
-        'SOURCE': [int],
-        'FRACTION': [float],
-        'PARTICLE': ['list', int],
-        'POINT': ['list', float],
-        'SPHERE': ['list', float],
-        'CYL/X': ['list', float],
-        'CYL/Y': ['list', float],
-        'CYL/Z': ['list', float],
-        'SURFACE': ['list', float],
-        'X': ['list', float],
-        'Y': ['list', float],
-        'Z': ['list', float],
-        'POSITION': ['list', float],
-        'RADIUS': ['list', float],
-        'AXIS': ['list', float],
-        'POlAR': ['list', float],
-        'POLARTHETA': ['list', float],
-        'EXTENT': ['list', float],
-        'HEIGHT': ['list', float],
-        'NORM': ['list', float],
-        'VECTOR': ['list', float],
-        'DIRECMIU': ['list', float],
-        'FAIVECTOR': ['list', float],
-        'DIRECFAI': ['list', float],
-        'ENERGY': ['list', float],
-        'CELL': ['list', int],
-        'SAMPEFF': [float],
-        'BIASFRAC': [float],
-        'WEIGHT': [float],
-        'TRANSFORM': [int]
-    }
+
+    ###########有问题的card_option_types################################
+    # card_option_types = {
+    #     'SOURCE': [int],
+    #     'FRACTION': [float],
+    #     'PARTICLE': [int],
+    #     'POINT': ['list', float],
+    #     'SPHERE': ['list', str],
+    #     'CYL/X': ['list', str],
+    #     'CYL/Y': ['list', str],
+    #     'CYL/Z': ['list', str],
+    #     'SURFACE': ['list', str],
+    #     'X': [str],
+    #     'Y': [str],
+    #     'Z': [str],
+    #     'POSITION': ['list', str],
+    #     'RADIUS': [str],
+    #     'AXIS': ['list', str],
+    #     'POlAR': ['list', str],
+    #     'POLARTHETA': ['list', str],
+    #     'EXTENT': ['list', str],
+    #     'HEIGHT': ['list', str],
+    #     'NORM': ['list', str],
+    #     'VECTOR': ['list', str],
+    #     'DIRECMIU': ['list', str],
+    #     'FAIVECTOR': ['list', str],
+    #     'DIRECFAI': ['list', str],
+    #     'ENERGY': ['list', str],
+    #     'CELL': ['list', str],
+    #     'SAMPEFF': [str],
+    #     'BIASFRAC': [str],
+    #     'WEIGHT': [str],
+    #     'TRANSFORM': [str]
+    # }
 
     def __init__(self, source_id=None, fraction=None, particle=None, point=None, sphere=None, cyl_x=None, cyl_y=None,
                  cyl_z=None, surface=None, x=None, y=None, z=None, position=None, radius=None, axis=None, polar=None,
@@ -263,67 +265,122 @@ class Source(BaseModel):
     def surface(self):
         return self._surface
 
+    # def __str__(self):
+    #     card = 'Source'
+    #     card += ' ' + str(self._id)
+    #     if self._fraction is not None:
+    #         card += ' Fraction = ' + str(self._fraction)
+    #     # if self._particle is not None:
+    #     #     card += ' Particle = ' + ' '.join([str(x) for x in self._particle])
+    #     if self._particle is not None:
+    #         card += ' Particle = ' + str(self._particle)
+    #     if self._point is not None:
+    #         card += ' point = ' + ' '.join([str(x) for x in self._point])
+    #     if self._sphere is not None:
+    #         card += ' sphere = ' + ' '.join([str(x) for x in self._sphere])
+    #     if self._cyl_x is not None:
+    #         card += ' Cyl/x = ' + ' '.join([str(x) for x in self._cyl_x])
+    #     if self._cyl_y is not None:
+    #         card += ' Cyl/y = ' + ' '.join([str(x) for x in self._cyl_y])
+    #     if self._cyl_z is not None:
+    #         card += ' Cyl/z = ' + ' '.join([str(x) for x in self._cyl_z])
+    #     if self._surface is not None:
+    #         card += ' Surface = ' + ' '.join([str(x) for x in self._surface])
+    #     # if self._x is not None:
+    #     #     card += ' X = ' + ' '.join([str(x) for x in self._x])
+    #     # if self._y is not None:
+    #     #     card += ' Y = ' + ' '.join([str(x) for x in self._y])
+    #     # if self._z is not None:
+    #     #     card += ' Z = ' + ' '.join([str(x) for x in self._z])
+    #     if self._x is not None:
+    #         card += ' X = ' + str(self._x)
+    #     if self._y is not None:
+    #         card += ' Y = ' + str(self._y)
+    #     if self._z is not None:
+    #         card += ' Z = ' + str(self._z)
+    #     if self._position is not None:
+    #         card += ' Position = ' + ' '.join([str(x) for x in self._position])
+    #     # if self._radius is not None:
+    #     #     card += ' Radius = ' + ' '.join([str(x) for x in self._radius])
+    #     if self._radius is not None:
+    #         card += ' Radius = ' + str(self._radius)
+    #     if self._axis is not None:
+    #         card += ' Axis = ' + ' '.join([str(x) for x in self._axis])
+    #     if self._extent is not None:
+    #         card += ' Extent = ' + ' '.join([str(x) for x in self._extent])
+    #     if self._polar is not None:
+    #         card += ' Polar = ' + ' '.join([str(x) for x in self._polar])
+    #     if self._polartheta is not None:
+    #         card += ' PolarTheta = ' + ' '.join([str(x) for x in self._polartheta])
+    #     if self._height is not None:
+    #         card += ' Height = ' + ' '.join([str(x) for x in self._height])
+    #     if self._norm is not None:
+    #         card += ' Norm = ' + ' '.join([str(x) for x in self._norm])
+    #     if self._vector is not None:
+    #         card += ' Vector = ' + ' '.join([str(x) for x in self._vector])
+    #     if self._direcmiu is not None:
+    #         card += 'DirecMiu = ' + ' '.join([str(x) for x in self._direcmiu])
+    #     if self._faivector is not None:
+    #         card += ' FaiVector = ' + ' '.join([str(x) for x in self._faivector])
+    #     if self._direcfai is not None:
+    #         card += ' DirecFai = ' + ' '.join([str(x) for x in self._direcfai])
+    #     if self._energy is not None:
+    #         card += ' Energy = ' + ' '.join([str(x) for x in self._energy])
+    #     if self._cell is not None:
+    #         card += ' Cell = ' + ' '.join([str(x) for x in self._cell])
+    #     if self._sampeff is not None:
+    #         card += ' SampEff = ' + str(self._sampeff)
+    #     if self._biasfrac is not None:
+    #         card += ' Biasfrac = ' + str(self._biasfrac)
+    #     if self._weight is not None:
+    #         card += ' Weight = ' + str(self._weight)
+    #     if self._transform is not None:
+    #         card += ' Transform= ' + str(self._transform)
+    #     card += '\n'
+    #     return card
     def __str__(self):
-        card = 'Source'
-        card += ' ' + str(self._id)
+        card = 'Source ' + str(self._id)
         if self._fraction is not None:
-            card += ' Fraction = ' + str(self._fraction)
-        if self._particle is not None:
-            card += ' Particle = ' + ' '.join([str(x) for x in self._particle])
-        if self._point is not None:
-            card += ' point = ' + ' '.join([str(x) for x in self._point])
-        if self._sphere is not None:
-            card += ' sphere = ' + ' '.join([str(x) for x in self._sphere])
-        if self._cyl_x is not None:
-            card += ' Cyl/x = ' + ' '.join([str(x) for x in self._cyl_x])
-        if self._cyl_y is not None:
-            card += ' Cyl/y = ' + ' '.join([str(x) for x in self._cyl_y])
-        if self._cyl_z is not None:
-            card += ' Cyl/z = ' + ' '.join([str(x) for x in self._cyl_z])
-        if self._surface is not None:
-            card += ' Surface = ' + ' '.join([str(x) for x in self._surface])
-        if self._x is not None:
-            card += ' X = ' + ' '.join([str(x) for x in self._x])
-        if self._y is not None:
-            card += ' Y = ' + ' '.join([str(x) for x in self._y])
-        if self._z is not None:
-            card += ' Z = ' + ' '.join([str(x) for x in self._z])
-        if self._position is not None:
-            card += ' Position = ' + ' '.join([str(x) for x in self._position])
-        if self._radius is not None:
-            card += ' Radius = ' + ' '.join([str(x) for x in self._radius])
-        if self._axis is not None:
-            card += ' Axis = ' + ' '.join([str(x) for x in self._axis])
-        if self._extent is not None:
-            card += ' Extent = ' + ' '.join([str(x) for x in self._extent])
-        if self._polar is not None:
-            card += ' Polar = ' + ' '.join([str(x) for x in self._polar])
-        if self._polartheta is not None:
-            card += ' PolarTheta = ' + ' '.join([str(x) for x in self._polartheta])
-        if self._height is not None:
-            card += ' Height = ' + ' '.join([str(x) for x in self._height])
-        if self._norm is not None:
-            card += ' Norm = ' + ' '.join([str(x) for x in self._norm])
-        if self._vector is not None:
-            card += ' Vector = ' + ' '.join([str(x) for x in self._vector])
-        if self._direcmiu is not None:
-            card += 'DirecMiu = ' + ' '.join([str(x) for x in self._direcmiu])
-        if self._faivector is not None:
-            card += ' FaiVector = ' + ' '.join([str(x) for x in self._faivector])
-        if self._direcfai is not None:
-            card += ' DirecFai = ' + ' '.join([str(x) for x in self._direcfai])
-        if self._energy is not None:
-            card += ' Energy = ' + ' '.join([str(x) for x in self._energy])
-        if self._cell is not None:
-            card += ' Cell = ' + ' '.join([str(x) for x in self._cell])
-        if self._sampeff is not None:
-            card += ' SampEff = ' + str(self._sampeff)
-        if self._biasfrac is not None:
-            card += ' Biasfrac = ' + str(self._biasfrac)
-        if self._weight is not None:
-            card += ' Weight = ' + str(self._weight)
-        if self._transform is not None:
-            card += ' Transform= ' + str(self._transform)
+            card += ' Fraction=' + str(self._fraction)
+        
+        # 对于每个属性，检查是否是列表类型，然后相应地处理
+        attributes = [
+            ('Particle', self._particle),
+            ('point', self._point),
+            ('sphere', self._sphere),
+            ('Cyl/x', self._cyl_x),
+            ('Cyl/y', self._cyl_y),
+            ('Cyl/z', self._cyl_z),
+            ('Surface', self._surface),
+            ('X', self._x),
+            ('Y', self._y),
+            ('Z', self._z),
+            ('Position', self._position),
+            ('Radius', self._radius),
+            ('Axis', self._axis),
+            ('Extent', self._extent),
+            ('Polar', self._polar),
+            ('PolarTheta', self._polartheta),
+            ('Height', self._height),
+            ('Norm', self._norm),
+            ('Vector', self._vector),
+            ('DirecMiu', self._direcmiu),
+            ('FaiVector', self._faivector),
+            ('DirecFai', self._direcfai),
+            ('Energy', self._energy),
+            ('Cell', self._cell),
+            ('SampEff', self._sampeff),
+            ('Biasfrac', self._biasfrac),
+            ('Weight', self._weight),
+            ('Transform', self._transform),
+        ]
+        
+        for name, value in attributes:
+            if value is not None:
+                # 如果是列表，则使用 join，否则直接转换为字符串
+                card_part = ' '.join(map(str, value)) if isinstance(value, list) else str(value)
+                card += ' ' + name + '=' + card_part
+        
         card += '\n'
         return card
 
@@ -473,7 +530,7 @@ class Distribution(BaseModel):
         card = "Distribution "
         card += str(self.id)
         if self.depend:
-            card += ' depend = ' + self.depend
+            card += ' depend = ' + str(self.depend)
         card += ' type = ' + str(self.type)
         if self.value:
             card += ' value = ' + ' '.join(

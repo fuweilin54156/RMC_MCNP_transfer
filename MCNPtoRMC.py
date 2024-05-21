@@ -62,19 +62,18 @@ def transfer(inp_MCNP):
                 print(" Warning: unparsed items in MCNP macrobody " + M_body.body_number + " : " + M_body.unparsed)
             if M_body.tr is not None:
                 if M_body.tr.rotate is not None:
-                    body = RMCMacrobody.MacroBody.externalization(number=M_body.body_number, type=M_body.type,
-                                                                  parameters=M_body.params, move=M_body.tr.move,
-                                                                  rotate=np.array(M_body.tr.rotate).reshape([3, 3]))
+                        body = RMCMacrobody.MacroBody.externalization(number=M_body.body_number, type=M_body.type,
+                                                                    parameters=M_body.params, move=M_body.tr.move,
+                                                                    rotate=np.array(M_body.tr.rotate).reshape([3, 3]))
                 else:
                     body = RMCMacrobody.MacroBody.externalization(number=M_body.body_number, type=M_body.type,
-                                                                  parameters=M_body.params,
-                                                                  move=M_body.tr.move)
-                R_macrobodys.append(body)
+                                                                  parameters=M_body.params, move=M_body.tr.move)
+                R_macrobodys.append(body)  
             else:
                 body = RMCMacrobody.MacroBody.externalization(number=M_body.body_number, type=M_body.type,
                                                               parameters=M_body.params)
                 R_macrobodys.append(body)
-
+                
         R_macrobodys_model = RMCMacrobody.Macrobodies(macrobodies=R_macrobodys)
         test = str(R_macrobodys_model)
     except:
@@ -101,11 +100,13 @@ def transfer(inp_MCNP):
                 R_mat = RMCMat.Material(mat_id=mat.mat_id, density=mat.densities[0], nuclides=mat.nuclides)
                 R_materials.append(R_mat)
             elif not mat.densities:
-                print(' Warning: no density defined in mat: ' + str(mat.mat_id))
-                R_mat = RMCMat.Material(mat_id=mat.mat_id, density=0, nuclides=mat.nuclides)
+                print(' Warning: no density defined in mat: ' + str(mat.mat_id)+
+                      '\nPlease check if the material has not been used. \nThe density of unused materials will be set to 0.\n')
+                R_mat = RMCMat.Material(mat_id=mat.mat_id, density=888, nuclides=mat.nuclides)
                 R_materials.append(R_mat)
         if duplicate_mats:
-            print(' Warning: find duplicated mat densities, id: ' + str(duplicate_mats))
+            print(' Warning: find duplicated mat densities, id: ' + str(duplicate_mats)+
+                  '\nPlease use various material cards to describe the same material with different densities.\n')
         if M_model.model['materials']._unparsed is not None and M_model.model['materials']._unparsed != '':
             print(" Warning: unparsed items in MCNP materials : " + M_model.model['materials']._unparsed)
 
@@ -123,57 +124,87 @@ def transfer(inp_MCNP):
         R_cells = []
         R_universes = []
         R_universes_ids = []
+
+        Max_universe_id = 1
+        for cell in M_model.model['geometry'].cells:
+            if cell.universe:
+                # out_universe_id 栅元U号
+                Max_universe_id = max(cell.universe,Max_universe_id)
+        # print(Max_universe_id)
+
         for cell in M_model.model['geometry'].cells:
             if cell.unparsed is not None and cell.unparsed != '':
                 print(" Warning: unparsed items in MCNP cell " + str(cell.number) + " : " + cell.unparsed)
             out_universe_id = 0
+            if cell.impn==0:
+                test=1
             if cell.universe:
-                out_universe_id = cell.universe
+                # out_universe_id 栅元U号
+                out_universe_id = cell.universe 
             if cell.trcl is not None and cell.lat is None:
                 R_cell = RMCGeometry.Cell(number=cell.number, bounds=cell.bounds.replace('#', '!'),
                                           material=[cell.material],
                                           fill=cell.fill, imp_n=cell.impn, imp_p=cell.impp,
-                                          transformation=RMCGeometry.Transformation(move=cell.trcl.move,
-                                                                                    rotate=cell.trcl.rotate))
+                                          transformation=RMCGeometry.Transformation(move=cell.trcl.move,rotate=cell.trcl.rotate),
+                                          volume=cell.vol,temperature=cell.tmp,void=cell.void,imp_e=cell.impe)
             elif cell.lat is not None:
                 R_cell = RMCGeometry.Cell(number=cell.number, bounds=cell.bounds.replace('#', '!'),
-                                          material=[cell.material], imp_n=cell.impn, imp_p=cell.impp)
+                                          material=[cell.material],imp_n=cell.impn, imp_p=cell.impp,
+                                          volume=cell.vol,temperature=cell.tmp,void=cell.void,imp_e=cell.impe)
             else:
+
                 R_cell = RMCGeometry.Cell(number=cell.number, bounds=cell.bounds.replace('#', '!'),
                                           material=[cell.material],
-                                          fill=cell.fill, imp_n=cell.impn, imp_p=cell.impp)
+                                          fill=cell.fill, imp_n=cell.impn, imp_p=cell.impp,
+                                          volume=cell.vol,temperature=cell.tmp,void=cell.void,imp_e=cell.impe)
 
             established_univ = False
+
+            #检查是否已创建UNIVERSE
             for index in range(len(R_universes_ids)):
                 if R_universes_ids[index] == out_universe_id:
                     R_universes[index].cells.append(R_cell)
                     established_univ = True
-
+                
+            #如果未创建UNIVERSE，新建一个UNIVERSE
             if not established_univ:
                 R_lattice = None
                 if cell.lat is not None and cell.lat == 1:
-                    [scope, pitch, fill, move] = transfer_lat1(cell, R_surfaces_model, R_macrobodys_model)
+
+                    new_universe_id=out_universe_id + Max_universe_id
+
+                    [scope, pitch, fill, move] = transfer_lat1(cell, R_surfaces_model, R_macrobodys_model,new_universe_id)
                     R_lattice = RMCGeometry.Lattice(type=cell.lat, scope=scope, pitch=pitch, fill=fill)
                     R_universe1 = RMCGeometry.Universe(number=out_universe_id, lattice=R_lattice,
                                                        transformation=RMCGeometry.Transformation(move=move))
-                    R_universe2 = RMCGeometry.Universe(number=out_universe_id * 1000 + 1)
+                
+                    R_universe2 = RMCGeometry.Universe(number=new_universe_id)
                     R_universe2.cells.append(R_cell)
                     R_universes.append(R_universe2)
-                    R_universes_ids.append(out_universe_id * 1000 + 1)
+                    R_universes_ids.append(new_universe_id)
                     R_universes.append(R_universe1)
                     R_universes_ids.append(out_universe_id)
                 elif cell.lat is not None and cell.lat == 2:
-                    [scope, sita, pitch, fill, move] = transfer_lat2(cell, R_surfaces_model, R_macrobodys_model)
+
+                    new_universe_id=out_universe_id + Max_universe_id
+
+                    [scope, sita, pitch, fill, move] = transfer_lat2(cell, R_surfaces_model, R_macrobodys_model,new_universe_id)
                     R_lattice = RMCGeometry.Lattice(type=cell.lat, scope=scope, pitch=pitch, fill=fill, theta=sita)
                     R_universe1 = RMCGeometry.Universe(number=out_universe_id, lattice=R_lattice,
                                                        transformation=RMCGeometry.Transformation(move=move))
+                    R_universe2 = RMCGeometry.Universe(number=new_universe_id)
+                    R_universe2.cells.append(R_cell)
+                    R_universes.append(R_universe2)
+                    R_universes_ids.append(new_universe_id)
                     R_universes.append(R_universe1)
                     R_universes_ids.append(out_universe_id)
+                # 通常情况
                 else:
                     R_universe = RMCGeometry.Universe(number=out_universe_id, lattice=R_lattice)
                     R_universe.cells.append(R_cell)
                     R_universes.append(R_universe)
                     R_universes_ids.append(out_universe_id)
+
 
         # 添加 lat 里填充的 Universe 的 move 卡
         for univ in R_universes:
@@ -195,6 +226,7 @@ def transfer(inp_MCNP):
         R_universes = sorted(R_universes, key=lambda x: x.number)
         R_geometry_model = RMCGeometry.Geometry(universes=R_universes)
         test3 = str(R_geometry_model)
+        # print(test3)
     except:
         print(" Error: failed to transfer the MCNP Geometry(Cell) block to RMC Geometry.")
 
@@ -205,7 +237,7 @@ def transfer(inp_MCNP):
             h5source = None
             surfsrcread_list = []
             unparsed = ''
-            [RMC_Distribution, RMC_source] = Transfer_source(Combined_distribution, M_model.model['externalsource'].source, R_universes)
+            [RMC_Distribution, RMC_source] = Transfer_source(Combined_distribution, M_model.model['externalsource'].source, R_universes,M_model.model['mode'].mode)
             R_externalsource = ExternalSource(source=RMC_source, surfsrcread=surfsrcread_list, distributions=RMC_Distribution,
                                               h5source=h5source, unparsed=unparsed)
             R_model.model['externalsource'] = R_externalsource
@@ -247,19 +279,22 @@ def transfer(inp_MCNP):
         # R_model.model['criticality'] = RMCCriticality.Criticality(power_iter=power_iter,
         #                                                           unparsed='InitSrc point = 0 0 0')
         # set the plot block
-        R_model.model[
-            'plot'] = 'PLOT\n' \
+        R_model.model['plot'] = 'PLOT\n' \
                       'PlotID 1 Type = slice Color = cell Pixels=10000 10000 Vertexes=-100 -100 0 100 100 0\n' \
                       'PlotID 2 type = slice color = cell pixels=10000 10000 vertexes=-100 0 -100 100 0 100'
 
         # output 2 files, RMC python file and RMC binary file
-        with open(inp_MCNP + '.rmc.python', 'w+') as f:
-            f.write(str(R_model))
+        
+
+        with open(inp_MCNP + '.rmc.python', 'w+') as f: 
+            s=str(R_model)
+            f.write(s)
         with open(inp_MCNP + '.rmc.binary', 'w+') as f:
             R_py_file = inp_MCNP + '.rmc.python'
             try:
                 R_parserd_model = RMCPlainParser(R_py_file).parsed
                 f.write(str(R_parserd_model))
+
             except:  # ValueError as e:
                 print(" Warning: could not generat RMC binary input file.")
                 # print(" Catch the exception: ", e)
@@ -269,7 +304,7 @@ def transfer(inp_MCNP):
     print('File: [' + inp_MCNP + '] have been processed!\n')
 
 
-def transfer_lat1(cell, R_surfaces, R_macrobodys):
+def transfer_lat1(cell, R_surfaces, R_macrobodys,new_universe_id):
     scope = np.zeros(3)
     pitch = np.zeros(3)
     fill = np.ones(1)
@@ -297,7 +332,7 @@ def transfer_lat1(cell, R_surfaces, R_macrobodys):
                 index = 9
     scope = np.array([x_right - x_left + 1, y_right - y_left + 1, z_right - z_left + 1])
     # fill = np.array(params[index:].replace(cell.universe, cell.universe*1000+1))
-    fill = np.array([i if i is not cell.universe else i*1000+1 for i in params[index:]])
+    fill = np.array([i if i is not cell.universe else new_universe_id for i in params[index:]])
     nums_in_bounds = re.findall(r'[0-9]+', cell.bounds)
     nums_in_bounds = [int(i) for i in nums_in_bounds]
     if len(nums_in_bounds) > 1:  # not Macrobody case
@@ -369,7 +404,7 @@ def transfer_lat1(cell, R_surfaces, R_macrobodys):
     return scope, pitch, fill, move
 
 
-def transfer_lat2(cell, R_surfaces, R_macrobodys):
+def transfer_lat2(cell, R_surfaces, R_macrobodys,new_universe_id):
     scope = np.zeros(2)
     pitch = np.zeros(2)
     fill = np.ones(1)
@@ -395,7 +430,7 @@ def transfer_lat2(cell, R_surfaces, R_macrobodys):
                 index = 9
     scope = np.array([x_right - x_left + 1, y_right - y_left + 1])
     # fill = np.array(params[index:].replace(cell.universe, cell.universe*1000+1))
-    fill = np.array([i if i is not cell.universe else i*1000+1 for i in params[index:]])
+    fill = np.array([i if i is not cell.universe else new_universe_id for i in params[index:]])
     nums_in_bounds = re.findall(r'[0-9]+', cell.bounds)
     nums_in_bounds = [int(i) for i in nums_in_bounds]
     if len(nums_in_bounds) > 1:  # not Macrobody case
@@ -495,18 +530,153 @@ def transfer_lat2(cell, R_surfaces, R_macrobodys):
     return scope, sita, pitch, fill, move
 
 
-def Transfer_source(distributions, sources, R_universes):
+def Transfer_source(distributions, sources, R_universes,mode):
+
+    # 转换所需结果为RMC的EXTERNALSOURCE所需5个部分
+    rmc_distribution = []
+    rmc_source = []
+    rmc_surfsrcread = []
+    rmc_transformation = []
+    rmc_h5sourceinfo = []
+
     function_transfer = {'-2': -3, '-3': -4, '-4': -5, '-5': -6, '-21': -1, '-31': -2}
+
+
+    #MCNP以 F VAR表示相关的变量，RMC以depend表示，应先遍历source，再描述distribution
+    for pos, source in enumerate(sources):
+
+        fraction_value = None # MCNP无多个源设置。如果实际使用了若干个源，需要在分布中设置合适的probability，或者最后应该手动检查概率是否归一化
+        partilce_value = None
+
+        point_value = None # RMC快速定义源设置
+        sphere_value = None # RMC快速定义源设置
+        cyl_x_value = None # RMC快速定义源设置
+        cyl_y_value = None # RMC快速定义源设置
+        cyl_z_value = None # RMC快速定义源设置
+
+        surface_value = None
+        x_value = None
+        y_value = None
+        z_value = None
+        position_value = None
+        radius_value = None
+        axis_value = None
+        polar_value = None
+        polartheta_value = None
+        extent_value = None
+        height_value = None
+        norm_value = None
+        vector_value = None
+        direcmiu_value = None
+        faivector_value = None
+        direcfai_value = None
+        energy_value = None
+        cell_value = None
+        sampeff_value = None
+        biasfrac_value = None
+        weight_value = None
+        transform_value = None
+
+        
+        # 粒子源类型
+        if source._par is not None:
+            partilce_value = source._par
+        else :
+            if mode == ['P'] :
+                partilce_value = 2
+            else :
+                partilce_value = 1
+            # partilce_value = int(1)
+
+
+        # 面源参数
+        if source._sur is not None:
+            surface_value = source._sur
+        
+        # 点源参数
+        if source._x is not None:
+            if re.search(r'F', source._x[0]):
+                x_value = [source._x[1]]
+            else:
+                x_value = source._x
+        if source._y is not None:
+            if re.search(r'F', source._y[0]):
+                y_value = [source._y[1]]
+            else:
+                y_value = source._y
+        if source._z is not None:
+            if re.search(r'F', source._z[0]):
+                z_value = [source._z[1]]
+            else:
+                z_value = source._z
+        if source.pos is not None:
+            position_value = source.pos
+
+        # 体源参数
+        if source._rad is not None:
+            radius_value = source._rad
+        if source._axs is not None:
+            axis_value = source._axs
+        # 面源、体源的EXT定义不同；默认为体源，EXT为柱体高度；sur非0时为面源，EXT为余弦
+        if source._ext is not None:
+            if source._sur:
+                extent_value = source._ext
+            else:
+                height_value = source._ext
+        
+        # 粒子发射角度参数
+        if source._nrm is not None:
+            norm_value = source._nrm
+        if source._dir is not None:
+            direcmiu_value = source._dir
+        if source._vec is not None:
+            vector_value = source._vec
+
+        # 粒子发射能量参数
+        if source._erg is not None:
+            energy_value = source._erg
+        
+        # 粒子所在栅元参数，注意MCNP与RMC的栅元向量写法顺序是相反的（MCNP:1<10<100 RMC:100>10>1）
+        if source.cell is not None:
+            cell_value = source.cell
+        
+        # 源粒子权重参数，只能是单个正数
+        if source._wgt is not None:
+            weight_value = source._wgt
+        
+        # 源变换参数，为trID
+        if source._tr is not None:
+            transform_value = source._tr
+
+        r_Source = Source(source_id=1, fraction=fraction_value, particle=partilce_value, point=point_value, sphere=sphere_value, cyl_x=cyl_x_value, cyl_y=cyl_y_value,
+                 cyl_z=cyl_z_value, surface=surface_value, x=x_value, y=y_value, z=z_value, position=position_value, radius=radius_value, axis=axis_value, polar=polar_value,
+                 polartheta=polartheta_value, extent=extent_value, height=height_value, norm=norm_value, vector=vector_value, direcmiu=direcmiu_value, faivector=faivector_value,
+                 direcfai=direcfai_value, energy=energy_value, cell=cell_value, sampeff=sampeff_value, biasfrac=biasfrac_value, weight=weight_value, transform=transform_value)
+    
+        rmc_source.append(r_Source)
+
+
     transfer_id = {}
     for source in sources:
+        #RMC distribution type 0 相当于MCNP S分布
+        #RMC distribution type 1 2 3相当于MCNP L分布
+        #RMC distribution type 4 相当于MCNP H分布
+        #RMC distribution type 5 相当于MCNP A分布
+        #type 0 1 2 3 4才可用depend依赖，type5是连续分布不能被depend
+        #depend的用法：var2 depend = var1，当var1取第一个值时，var2用第一种分布抽样，当var1取第二个值时，var2用第二种分布抽样
+
+    
+        #RMC distribution type 2
         if source.pos:
             Pos = source.pos
             for pos in Pos:
+                # Pos为[x,y,z]的取值
                 if re.match(r'D', str(pos), flags=re.IGNORECASE):
                     if 'POS' in transfer_id.keys():
                         transfer_id['POS'] += int(re.findall("\d+", pos)[0])
                     else:
                         transfer_id['POS'] = int(re.findall("\d+", pos)[0])
+        #RMC distribution type 3
         if source.cell:
             cells = source.cell
             for cell in cells:
@@ -515,12 +685,28 @@ def Transfer_source(distributions, sources, R_universes):
                         transfer_id['CELL'] += int(re.findall("\d+", cell)[0])
                     else:
                         transfer_id['CELL'] = int(re.findall("\d+", cell)[0])
+    
+
+
+    # distribution_ID 为MCNP中的SI几，或者RMC中的distribution <ID>
+    # distributions : {1: {'SI': [...], 'SP': [...]}, 2: {'SI': [...], 'SP': [...]}}
+    #      RMC的distribution格式：
+    #      Distribution  <id> 
+    #      [Depend = <id>]  Type = <flag>  Value= <params>
+    #      Probability = <params>  [Bias = <params>]
+
     distribution_ID = distributions.keys()
-    rmc_distribution = []
-    rmc_source = []
     for id in distribution_ID:
+        
+        type = None
+        type_value = []
+        probability_value = []
+        bias_value = []
+        depend_id = None
+
         cell = False
         pos = False
+
         if transfer_id:
             if 'CELL' in transfer_id.keys():
                 cell_id = [transfer_id['CELL']]
@@ -530,21 +716,25 @@ def Transfer_source(distributions, sources, R_universes):
                 pos_id = [transfer_id['POS']]
                 if id in pos_id:
                     pos = True
+        
+        
+        
         distribution_value = distributions[id]
-        type = None
-        type_value = []
-        probability_value = []
-        bias_value = []
-        depend_id = None
+        
         if "SI" in distribution_value:
-            for source in sources:
-                if source._rad is not None or source._ext is not None:
-                    if re.match(r'D\d+', source._rad[0], flags=re.I) or re.match(r'D\d+', source._ext[0], flags=re.I):
-                        dis_id = int(list(source._rad[0])[1])
-                        if dis_id == id and "SP" not in distribution_value:
-                            type = function_transfer['-21']
-                            probability_value.append(2)
-                            type_value.append(0)
+            # for source in sources:
+                # if source._rad is not None or source._ext is not None:
+                #     if re.match(r'D\d+', source._rad[0], flags=re.I) or re.match(r'D\d+', source._ext[0], flags=re.I):
+                #         dis_id = int(list(source._rad[0])[1:])
+                #         if dis_id == id and "SP" not in distribution_value:
+                #             type = function_transfer['-21']
+                #             probability_value.append(1)
+                #             type_value.append(0)
+
+            #RMC distribution type 0 相当于MCNP S分布
+            #RMC distribution type 1 2 3相当于MCNP L分布
+            #RMC distribution type 4 相当于MCNP H分布
+            #RMC distribution type 5 相当于MCNP A分布
             si_value = distribution_value['SI']
             if cell:
                 type_value = postprocess(si_value, R_universes)
@@ -558,7 +748,55 @@ def Transfer_source(distributions, sources, R_universes):
                         type_value.append(value)
             if si_option == None:
                 si_option = 'H'
+
+            if si_option == 'H':
                 type = 4
+            elif si_option == 'S':
+                type = 0
+            elif si_option == 'L':
+                type = 1
+            elif si_option == 'A':
+                type = 5
+            else:
+                ValueError('Unknow Distribution Type')
+        
+
+        
+        if "DS" in distribution_value:
+            ds_value = distribution_value['DS']
+            ds_option = None
+            depend_id = None
+            type = None
+            pattern = r'depend_distribution_id=(\d+)'
+            for item in ds_value:
+                # 检查是否匹配 depend_distribution_id
+                if item.startswith('depend_distribution_id='):
+                    
+                    match = re.search(pattern, item)
+                    if match:
+                        depend_id = int(match.group(1))  # 提取数字
+                # 检查是否是字母
+                elif item.isalpha():
+                    ds_option = item  # 直接赋值
+                elif item.isdigit():
+                    type_value.append(int(item))
+
+            if ds_option == None:
+                ds_option = 'H'
+
+            if ds_option == 'H':
+                type = 4
+            elif ds_option == 'S':
+                type = 0
+            elif ds_option == 'L':
+                type = 1
+            elif ds_option == 'A':
+                type = 5
+            else:
+                ValueError('Unknow Distribution Type')
+
+
+
         if "SP" in distribution_value:
             sp_value = distribution_value['SP']
             sp_option = None
@@ -582,94 +820,34 @@ def Transfer_source(distributions, sources, R_universes):
                     bias_value.append(value)
             if sb_option == None:
                 sb_option = 'D'
-        if "DS" in distribution_value:
-            ds_value = distribution_value['DS']
-            ds_option = None
-            depend_id = '1'
-            type = 0
-            for value in ds_value:
-                if value.isalpha():
-                    ds_option = value
-                else:
-                    type_value.append(int(value))
-        rmc_distribution.append(Distribution(id=id, depend=depend_id, type=type, value=type_value, probability=probability_value, bias=bias_value))
-    for pos, source in enumerate(sources):
-        cell_value = None
-        fraction_value = None
-        partilce_value = [1]
-        point_value = None
-        sphere_value = None
-        cyl_x_value = None
-        cyl_y_value = None
-        cyl_z_value = None
-        surface_value = None
-        x_value = None
-        y_value = None
-        z_value = None
-        position_value = None
-        radius_value = None
-        axis_value = None
-        polar_value = None
-        polartheta_value = None
-        extent_value = None
-        height_value = None
-        norm_value = None
-        vector_value = None
-        direcmiu_value = None
-        faivector_value = None
-        direcfai_value = None
-        energy_value = None
-        sampeff_value = None
-        biasfrac_value = None
-        weight_value = None
-        transform_value = None
-        if source.cell is not None:
-            cell_value = source.cell
-        if source.pos is not None:
-            position_value = source.pos
-        if source._x is not None:
-            if re.search(r'F', source._x[0]):
-                x_value = [source._x[1]]
-            else:
-                x_value = source._x
-        if source._y is not None:
-            if re.search(r'F', source._y[0]):
-                y_value = [source._y[1]]
-            else:
-                y_value = source._y
-        if source._z is not None:
-            if re.search(r'F', source._z[0]):
-                z_value = [source._z[1]]
-            else:
-                z_value = source._z
-        if source._sur is not None:
-            surface_value = source._sur
-        if source._erg is not None:
-            energy_value = source._erg
-        if source._dir is not None:
-            direcmiu_value = source._dir
-        if source._vec is not None:
-            vector_value = source._vec
-        if source._nrm is not None:
-            norm_value = source._nrm
-        if source._rad is not None:
-            radius_value = source._rad
-        if source._ext is not None:
-            extent_value = source._ext
-        if source._axs is not None:
-            axis_value = source._axs
-        if source._wgt is not None:
-            weight_value = source._wgt
-        if source._tr is not None:
-            transform_value = source._tr
-        if source._eff is not None:
-            sampeff_value = source._eff
-        if source._par is not None:
-            partilce_value = source._par
-        rmc_source.append(Source(source_id=pos+1, fraction=fraction_value, particle=partilce_value, point=point_value, sphere=sphere_value, cyl_x=cyl_x_value, cyl_y=cyl_y_value,
-                 cyl_z=cyl_z_value, surface=surface_value, x=x_value, y=y_value, z=z_value, position=position_value, radius=radius_value, axis=axis_value, polar=polar_value,
-                 polartheta=polartheta_value, extent=extent_value, height=height_value, norm=norm_value, vector=vector_value, direcmiu=direcmiu_value, faivector=faivector_value,
-                 direcfai=direcfai_value, energy=energy_value, cell=cell_value, sampeff=sampeff_value, biasfrac=biasfrac_value, weight=weight_value, transform=transform_value))
+        # 检查 "SP" 是否不在 distribution_value 中
+    if probability_value==[]:
+        total_elements = len(type_value)
+        
+        # 避免除以零错误
+        if total_elements == 0:
+            raise ValueError("Source type_value list is empty, cannot divide by zero")
+
+        # 根据 type 生成 probability_value
+        if type in [0, 1, 3, 5]:  # 对于类型 0, 1, 3, 5
+            probability_value = [(1 / total_elements) for _ in range(total_elements)]
+        elif type == 2:  # 对于类型 2
+            # 元素个数是 type_value 列表元素个数的 1/3，向下取整
+            probability_value_count = total_elements // 3
+            probability_value = [(1 / probability_value_count) for _ in range(probability_value_count)]
+        elif type == 4:  # 对于类型 4
+            # 元素个数是 type_value 列表元素个数 - 1，需要确保总数不为0
+            probability_value_count = total_elements - 1 if total_elements > 0 else 0
+            probability_value = [(1 / probability_value_count) for _ in range(probability_value_count)]
+
+            
+
+        r_Distribution=Distribution(id=id, depend=depend_id, type=type, value=type_value, probability=probability_value, bias=bias_value)
+        
+        
+        
+        rmc_distribution.append(r_Distribution)
+        
     return [rmc_distribution, rmc_source]
 
 

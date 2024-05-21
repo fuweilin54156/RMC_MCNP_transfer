@@ -12,10 +12,10 @@ class MacroBody(BaseModel):
         'RCC': ['list', float, 7],
         'RPP': ['list', float, 6],
         'BOX': ['list', float, 12],
-        'SPH': ['list', float, 4],
-        'HEX': ['list', float, 15 or 9],
-        'RHP': ['list', float, 15 or 9],
-        'REC': ['list', float, 12 or 10],
+        'SPH': ['list', float, 1 or 4],
+        'HEX': ['list', float,  15 or 9],
+        'RHP': ['list', float,  9 or 15],
+        'REC': ['list', float,  10],
         'TRC': ['list', float, 9],
         'ELL': ['list', float, 7],
         'WED': ['list', float, 12],
@@ -27,8 +27,8 @@ class MacroBody(BaseModel):
     }
 
     def __init__(self, number=None, type=None, params=None, rotate=None, rotate_angle=None, move=None):
-        self.params = params
         self.type = type
+        self.params = params
         self.body_number = number
         self.surf_ids = []
 
@@ -81,8 +81,12 @@ class MacroBody(BaseModel):
         the externalized macrobody object
         """
         attribute = re.sub('/', '_', type, re.I)
-        return getattr(sys.modules[__name__], attribute)(number=number, type=type, params=parameters,
+        if(attribute == 'RHP'):
+            attribute = 'HEX'
+        ans = getattr(sys.modules[__name__], attribute, 'None')(number=number, type=type, params=parameters,
                                                          rotate=rotate, rotate_angle=rotate_angle, move=move)
+
+        return ans
 
 
 class RCC(MacroBody):
@@ -264,16 +268,21 @@ class SPH(MacroBody):
         super().__init__(number=number, type=type, params=params, rotate=rotate, rotate_angle=rotate_angle, move=move)
 
     def transfer(self, max_surf_id=0):
-        surface = []
-        surface_model = []
-        self.surf_ids.append(max_surf_id + 1)
-        surf_type = 'S'
-        for i in range(0, 4):
-            surface.append(self.params[i])
-        surf = Surface.externalization(number=self.surf_ids[0], type=surf_type, parameters=surface,
-                                       rotate=self.rotate, rotate_angle=self.rotate_angle, move=self.move)
-        surf = surf.transfer()
-        surface_model.append(surf)
+        if len(self.params) == 1:
+            self.params = [0.0, 0.0, 0.0] + self.params
+        try:
+            surface = []
+            surface_model = []
+            self.surf_ids.append(max_surf_id + 1)
+            surf_type = 'S'
+            for i in range(0, 4):
+                surface.append(self.params[i])
+            surf = Surface.externalization(number=self.surf_ids[0], type=surf_type, parameters=surface,
+                                        rotate=self.rotate, rotate_angle=self.rotate_angle, move=self.move)
+            surf = surf.transfer()
+            surface_model.append(surf)
+        except:
+            print("SPH transfer error"+self.number)
         return Surfaces(surfaces=surface_model)
 
     def bound(self, in_=True):
@@ -409,6 +418,82 @@ class ELL(MacroBody):
         else:
             return f'{self.surf_ids[0]}'
 
+class HEX(MacroBody):
+    # 六棱柱
+
+    def __init__(self, number, type, params, rotate=None, rotate_angle=None, move=None):
+        super().__init__(number=number, type=type, params=params, rotate=rotate, rotate_angle=rotate_angle, move=move)
+
+    def transfer(self, max_surf_id=0):
+        surface_model = []
+        surface = [[] for _ in range(8)]
+        co_bottom = [self.params[0], self.params[1], self.params[2]]  # 获取底面坐标
+        axial_vector = [self.params[3], self.params[4], self.params[5]]  # 轴向向量
+        axial_length = np.linalg.norm(axial_vector)  # 圆柱轴向长度
+        axial_vector = [axial_vector[0] / axial_length, axial_vector[1] / axial_length,
+                        axial_vector[2] / axial_length]  # 轴向单位向量
+        vector_r = [self.params[6], self.params[7], self.params[8]]  # 中心到第一个面的向量
+        vector_s = np.zeros(3)
+        vector_t = np.zeros(3)
+        surf_type = ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P']
+        if len(self.params) == 9:
+            # 这里参数长度为9的情况是正六棱柱
+            vector_s = [
+                vector_r[0] / 2 + (math.sqrt(3) / 2) * (vector_r[1] * axial_vector[2] - vector_r[2] * axial_vector[1]),
+                vector_r[1] / 2 + (math.sqrt(3) / 2) * (vector_r[2] * axial_vector[0] - vector_r[0] * axial_vector[2]),
+                vector_r[2] / 2 + (math.sqrt(3) / 2) * (vector_r[0] * axial_vector[1] - vector_r[1] * axial_vector[0])]
+            vector_t = [
+                vector_r[0] / 2 - (math.sqrt(3) / 2) * (vector_r[1] * axial_vector[2] - vector_r[2] * axial_vector[1]),
+                vector_r[1] / 2 - (math.sqrt(3) / 2) * (vector_r[2] * axial_vector[0] - vector_r[0] * axial_vector[2]),
+                vector_r[2] / 2 - (math.sqrt(3) / 2) * (vector_r[0] * axial_vector[1] - vector_r[1] * axial_vector[0])]
+        else:
+            vector_s = [self.params[9], self.params[10], self.params[11]]
+            vector_t = [self.params[12], self.params[13], self.params[14]]
+        for i in range(3):
+            surface[0].append(vector_r[i])
+            surface[1].append(vector_r[i])
+            surface[2].append(vector_s[i])
+            surface[3].append(vector_s[i])
+            surface[4].append(vector_t[i])
+            surface[5].append(vector_t[i])
+            surface[6].append(axial_vector[i])
+            surface[7].append(axial_vector[i])
+        surface[0].append(vector_r[0] * (co_bottom[0] + vector_r[0]) + vector_r[1] * (co_bottom[1] + vector_r[1]) +
+                          vector_r[2] * (co_bottom[2] + vector_r[2]))
+        surface[1].append(vector_r[0] * (co_bottom[0] - vector_r[0]) + vector_r[1] * (co_bottom[1] - vector_r[1]) +
+                          vector_r[2] * (co_bottom[2] - vector_r[2]))
+        surface[2].append(vector_s[0] * (co_bottom[0] + vector_s[0]) + vector_s[1] * (co_bottom[1] + vector_s[1]) +
+                          vector_s[2] * (co_bottom[2] + vector_s[2]))
+        surface[3].append(vector_s[0] * (co_bottom[0] - vector_s[0]) + vector_s[1] * (co_bottom[1] - vector_s[1]) +
+                          vector_s[2] * (co_bottom[2] - vector_s[2]))
+        surface[4].append(vector_t[0] * (co_bottom[0] + vector_t[0]) + vector_t[1] * (co_bottom[1] + vector_t[1]) +
+                          vector_t[2] * (co_bottom[2] + vector_t[2]))
+        surface[5].append(vector_t[0] * (co_bottom[0] - vector_t[0]) + vector_t[1] * (co_bottom[1] - vector_t[1]) +
+                          vector_t[2] * (co_bottom[2] - vector_t[2]))
+        surface[6].append(axial_vector[0] * (co_bottom[0] + axial_vector[0] * axial_length) + axial_vector[1] *
+                          (co_bottom[1] + axial_vector[1] * axial_length) + axial_vector[2] * (
+                                  co_bottom[2] + axial_vector[2] *
+                                  axial_length))
+        surface[7].append(
+            axial_vector[0] * co_bottom[0] + axial_vector[1] * co_bottom[1] + axial_vector[2] * co_bottom[2])
+        for i in range(0, 8):
+            self.surf_ids.append(max_surf_id + i + 1)
+            surf = Surface.externalization(number=self.surf_ids[i], type=surf_type[i], parameters=surface[i],
+                                           rotate=self.rotate, rotate_angle=self.rotate_angle, move=self.move)
+            surf = surf.transfer()
+            surface_model.append(surf)
+        return Surfaces(surfaces=surface_model)
+
+    def bound(self, in_=True):
+        if not self.surf_ids:
+            raise ValueError('surface id is empty!\n')
+        if in_:
+            return f'({-self.surf_ids[0]}&{self.surf_ids[1]}&{-self.surf_ids[2]}&{self.surf_ids[3]}&{-self.surf_ids[4]}' \
+                   f'&{self.surf_ids[5]}&{-self.surf_ids[6]}&{self.surf_ids[7]})'
+        else:
+            return f'({self.surf_ids[0]}:{-self.surf_ids[1]}:{self.surf_ids[2]}:{-self.surf_ids[3]}:{self.surf_ids[4]}' \
+                   f':{-self.surf_ids[5]}:{self.surf_ids[6]}:{-self.surf_ids[7]})'
+                   
 
 class HEX(MacroBody):
     # 六棱柱

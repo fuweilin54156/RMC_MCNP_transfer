@@ -9,7 +9,8 @@ examples:
 
 support * and ? in input (only one is supported):
 '*' matches any char
-'?' matches single char
+'?' matche
+s single char
 for example:
 '01?' matches ['011', '01a']
 '01*' matches ['01', '011234567']

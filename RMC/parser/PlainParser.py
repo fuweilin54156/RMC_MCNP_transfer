@@ -56,6 +56,7 @@ class PlainParser:
             card_list = cards.split('\n')
             card_title = card_list[0].split(' ', 2)
             card = card_title[0].upper()
+
             if card == 'INCLUDE':
                 if (len(card_title) == 2) \
                         and (card_title[1].upper().startswith('MATERIAL')):
@@ -128,7 +129,12 @@ class PlainParser:
                     self.parsed_model.model['unparsed'].append(cards)
                     # raise ValueError('%s card can not be recognized!' % card_list[0])
 
-        self.parsed_model.postprocess()
+        print("cards done")
+        try:
+            self.parsed_model.postprocess()
+        except:
+            print("Error self.parsed_model.postprocess")
+            
         self._is_parsed = True
         return self.parsed_model
 

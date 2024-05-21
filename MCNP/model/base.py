@@ -41,6 +41,7 @@ class Model(YMLModelObject):
                 'materials': None,
                 'externalsource': None,
                 'critical': None,
+                'mode':None,
                 'unparsed': None
             }
         self.model = model
@@ -59,8 +60,8 @@ class Model(YMLModelObject):
         s = ''
         for key in self.model.keys():
             if key is not 'unparsed' and self.model[key] is not None:
+                val = self.model[key]
                 s += str(self.model[key])
-
         s += 'Warning: No parsed blocks are list below\n'
         for card in self.model['unparsed']:
             s += card + '\n'

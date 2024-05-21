@@ -106,6 +106,10 @@ class Model(YMLModelObject):
         s = ''
         for key in self.model.keys():
             if key is not 'unparsed' and self.model[key] is not None:
+                test_str_=str(self.model[key])
+                # print(s)
+                # print("####################")
+                # print(test_str_)
                 s += str(self.model[key])
         for card in self.model['unparsed']:
             s += card + '\n\n'
